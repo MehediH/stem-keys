@@ -1,26 +1,23 @@
 'use client';
+/* oxlint-disable jsx-a11y/no-noninteractive-element-interactions -- The drop region has an equivalent keyboard-accessible Upload button. */
 import { useEffect, useRef, useState } from 'react';
 import {
-  AudioLines,
   Upload,
   Play,
   Pause,
-  Keyboard,
-  ArrowUpRight,
-  Mic2,
-  Drum,
-  Guitar,
-  Waves,
   RotateCcw,
+  SkipBack,
   X,
   LoaderCircle,
+  CircleDot,
+  AlertCircle,
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Progress } from '@/components/ui/progress';
 import { useStemPlayer } from '@/hooks/use-stem-player';
-import { STEMS, audible, timeLabel } from '@/lib/audio';
+import { STEMS, audible } from '@/lib/audio';
 import { registerPlayerTools } from '@/lib/webmcp';
-const icons = [Mic2, Drum, Guitar, Waves];
+import { Halftone } from '@/components/halftone';
 
 export default function Home() {
   const input = useRef<HTMLInputElement>(null);
@@ -31,32 +28,12 @@ export default function Home() {
   useEffect(() => {
     playerRef.current = player;
   });
+  useEffect(() => registerPlayerTools(() => playerRef.current), []);
   const ready = player.status === 'ready',
     busy = player.status === 'processing';
-  useEffect(() => registerPlayerTools(() => playerRef.current), []);
   return (
-    <main className="studio">
-      <header className="topbar">
-        <div className="wordmark" aria-label="Stem Keys">
-          <AudioLines size={26} /> stem<span>keys</span>
-        </div>
-        <span className="local-note">
-          <i /> Audio stays on your device
-        </span>
-      </header>
-      <section className="session-heading">
-        <div>
-          <p className="eyebrow">YOUR OWN FOUR-TRACK MIXER</p>
-          <h1>
-            Pull a song apart.
-            <br />
-            <span>Play it your way.</span>
-          </h1>
-        </div>
-        <div className="session-number">
-          01 <span>/ SESSION</span>
-        </div>
-      </section>
+    <main className="blue-room">
+      <h1 className="sr-only">Stem Keys</h1>
       <input
         ref={input}
         type="file"
@@ -70,16 +47,17 @@ export default function Home() {
           e.target.value = '';
         }}
       />
-      <button
-        data-native-space
-        className={`upload-zone ${dragging ? 'dragging' : ''}`}
-        disabled={busy}
-        onClick={() => input.current?.click()}
+      <section
+        className={`instrument ${dragging ? 'dragging' : ''}`}
+        aria-label="Stem mixer"
         onDragOver={(e) => {
           e.preventDefault();
           if (!busy) setDragging(true);
         }}
-        onDragLeave={() => setDragging(false)}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node))
+            setDragging(false);
+        }}
         onDrop={(e) => {
           e.preventDefault();
           setDragging(false);
@@ -87,211 +65,159 @@ export default function Home() {
           if (!busy && file) void player.loadFile(file);
         }}
       >
-        <span className="upload-icon">
-          {busy ? (
-            <LoaderCircle className="spin" size={22} />
-          ) : (
-            <Upload size={22} />
-          )}
-        </span>
-        <span>
-          <strong>
-            {busy
-              ? player.name
-              : ready
-                ? 'Drop another song to start a new mix'
-                : 'Drop an MP3 here'}
-          </strong>
-          <span className="upload-detail">
-            {busy
-              ? 'Keep this tab open while your song is separated'
-              : 'or click to choose a song · up to 10 minutes / 100 MB'}
-          </span>
-        </span>
-        <ArrowUpRight className="upload-arrow" size={22} />
-      </button>
-      {busy && (
-        <div className="processing" aria-live="polite">
-          <div>
-            <span>{player.stage}</span>
-            <span>
-              {player.progress === null
-                ? ''
-                : `${Math.floor(player.progress)}%`}
-              <button
-                onClick={player.cancel}
-                className="cancel-button"
-                aria-label="Cancel separation"
-              >
-                <X size={16} /> Cancel
-              </button>
-            </span>
-          </div>
-          <Progress value={player.progress} aria-label={player.stage} />
-        </div>
-      )}
-      {player.error && (
-        <div className="error-box" role="alert">
-          <span>{player.error}</span>
-          {player.status === 'error' && (
-            <button onClick={player.retry}>Try again</button>
-          )}
-        </div>
-      )}
-      <section className="console" aria-label="Stem mixer">
-        <div className="transport">
-          <button
-            className="play-button"
-            disabled={!ready}
-            aria-label={player.playing ? 'Pause' : 'Play'}
-            onClick={() => void player.togglePlayback()}
-            aria-keyshortcuts="Space"
-          >
-            {player.playing ? (
-              <Pause size={23} fill="currentColor" />
-            ) : (
-              <Play size={23} fill="currentColor" />
-            )}
-          </button>
-          <div className="track-info">
-            <strong>{player.name || 'No track loaded'}</strong>
-            <span>
-              {ready
-                ? player.playing
-                  ? 'Playing your mix'
-                  : 'Ready when you are · press play'
-                : busy
-                  ? 'Preparing your four stems'
-                  : 'Upload a song to start mixing'}
-            </span>
-          </div>
-          <button
-            className="restart-button"
-            onClick={() => void player.seek(0)}
-            disabled={!ready}
-            aria-label="Restart song"
-            title="Restart (R)"
-          >
-            <RotateCcw size={18} />
-          </button>
-          <span className="time">
-            {timeLabel(player.position)}{' '}
-            <span>/ {timeLabel(player.duration)}</span>
-          </span>
-        </div>
-        <div className="seek">
-          <Slider
-            disabled={!ready}
-            min={0}
-            max={player.duration || 1}
-            step={0.1}
-            value={[scrub ?? player.position]}
-            onValueChange={(v) => setScrub(Array.isArray(v) ? v[0] : v)}
-            onValueCommitted={(v) => {
-              void player.seek(Array.isArray(v) ? v[0] : v);
-              setScrub(null);
-            }}
-            aria-label="Song position"
-          />
-        </div>
         <div className="stem-grid">
           {STEMS.map((stem, i) => {
-            const Icon = icons[i];
             const on = audible(player.mix, i);
             return (
-              <article key={stem.id} className={`stem-channel channel-${i}`}>
+              <article
+                key={stem.id}
+                className={`stem ${ready && !on ? 'muted' : ''}`}
+              >
                 <button
-                  className={`stem-pad ${ready && !on ? 'muted' : ''}`}
+                  className="stem-face"
                   disabled={!ready}
                   aria-label={`${on ? 'Mute' : 'Unmute'} ${stem.label}`}
                   aria-pressed={ready && on}
                   aria-keyshortcuts={String(i + 1)}
+                  title={`${stem.label} · ${i + 1} to mute · Shift ${i + 1} to solo`}
                   onClick={() => player.toggleStem(i)}
                 >
-                  <span className="pad-top">
-                    <kbd>{i + 1}</kbd>
-                    <span className="pad-state">
-                      {!ready
-                        ? 'WAITING'
-                        : !on
-                          ? 'MUTED'
-                          : player.mix.volumes[i] === 0
-                            ? 'LEVEL 0'
-                            : 'ON'}
-                    </span>
-                  </span>
-                  <span className="stem-symbol">
-                    {player.paths[i] ? (
-                      <svg
-                        viewBox="0 0 200 80"
-                        aria-hidden="true"
-                        className="waveform"
-                      >
-                        <path
-                          d={player.paths[i]}
-                          stroke="currentColor"
-                          strokeWidth="1.1"
-                          fill="none"
-                        />
-                      </svg>
-                    ) : (
-                      <Icon size={54} strokeWidth={1.3} />
-                    )}
-                  </span>
-                  <span className="pad-bottom">
-                    <strong>{stem.label}</strong>
-                    <span>0{i + 1}</span>
+                  <Halftone index={i} engine={player.engine} />
+                  <span className="stem-name">
+                    {stem.label}
+                    <i aria-hidden="true" />
                   </span>
                 </button>
-                <div className="channel-controls">
+                <div className="stem-controls">
                   <Slider
                     disabled={!ready}
-                    value={[player.mix.volumes[i]]}
                     min={0}
                     max={100}
                     step={1}
+                    value={[player.mix.volumes[i]]}
                     onValueChange={(v) =>
                       player.volume(i, Array.isArray(v) ? v[0] : v)
                     }
                     aria-label={`${stem.label} volume`}
                   />
-                  <span>{player.mix.volumes[i]}%</span>
+                  <button
+                    className="icon-button solo"
+                    disabled={!ready}
+                    aria-label={`Solo ${stem.label}`}
+                    aria-pressed={player.mix.solo === i}
+                    title={`Solo ${stem.label} · Shift ${i + 1}`}
+                    onClick={() => player.soloStem(i)}
+                  >
+                    <CircleDot size={17} strokeWidth={1.4} />
+                  </button>
                 </div>
-                <button
-                  className="solo-button"
-                  disabled={!ready}
-                  aria-pressed={player.mix.solo === i}
-                  aria-label={`Solo ${stem.label}`}
-                  onClick={() => player.soloStem(i)}
-                >
-                  Solo <kbd>⇧ {i + 1}</kbd>
-                </button>
               </article>
             );
           })}
         </div>
-        <footer className="console-footer">
-          <span>
-            <Keyboard size={17} />
-            <kbd>Space</kbd> play / pause
-          </span>
-          <span>
-            <kbd>1–4</kbd> mute <kbd>⇧ 1–4</kbd> solo
-          </span>
+        <div className="transport">
           <button
+            className="icon-button"
+            data-native-space
+            disabled={busy}
+            aria-label="Upload audio"
+            title="Upload audio · or drop an MP3 anywhere on the player"
+            onClick={() => input.current?.click()}
+          >
+            <Upload size={20} strokeWidth={1.5} />
+          </button>
+          <button
+            className="icon-button"
             disabled={!ready}
-            className="reset-button"
+            aria-label="Restart song"
+            title="Restart · R"
+            onClick={() => void player.seek(0)}
+          >
+            <SkipBack size={19} strokeWidth={1.5} />
+          </button>
+          {busy ? (
+            <button
+              className="play-button loading"
+              onClick={player.cancel}
+              aria-label="Cancel separation"
+              title={player.stage}
+            >
+              <LoaderCircle className="spinner" size={25} strokeWidth={1.4} />
+              <X className="cancel-icon" size={19} />
+            </button>
+          ) : (
+            <button
+              className="play-button"
+              disabled={!ready}
+              onClick={() => void player.togglePlayback()}
+              aria-label={player.playing ? 'Pause' : 'Play'}
+              aria-keyshortcuts="Space"
+              title="Play / pause · Space"
+            >
+              {player.playing ? (
+                <Pause size={23} fill="currentColor" strokeWidth={0} />
+              ) : (
+                <Play size={23} fill="currentColor" strokeWidth={0} />
+              )}
+            </button>
+          )}
+          <div className="timeline">
+            {busy ? (
+              <Progress value={player.progress} aria-label={player.stage} />
+            ) : (
+              <Slider
+                disabled={!ready}
+                min={0}
+                max={player.duration || 1}
+                step={0.1}
+                value={[scrub ?? player.position]}
+                onValueChange={(v) => setScrub(Array.isArray(v) ? v[0] : v)}
+                onValueCommitted={(v) => {
+                  void player.seek(Array.isArray(v) ? v[0] : v);
+                  setScrub(null);
+                }}
+                aria-label="Song position"
+              />
+            )}
+          </div>
+          <button
+            className="icon-button"
+            disabled={!ready}
+            aria-label="Reset mix"
+            title="Reset mix · 0"
             onClick={player.resetMix}
           >
-            Reset mix <kbd>0</kbd>
+            <RotateCcw size={18} strokeWidth={1.5} />
           </button>
-        </footer>
+        </div>
+        <span className="sr-only" aria-live="polite">
+          {busy
+            ? player.stage
+            : ready
+              ? `${player.name}. Ready.`
+              : 'Upload an MP3 to begin. Keys 1 through 4 toggle stems, Shift 1 through 4 solo, and Space plays or pauses.'}
+        </span>
+        {player.error && (
+          <div className="error-state">
+            <details>
+              <summary aria-label="Show error" title={player.error}>
+                <AlertCircle size={19} />
+              </summary>
+              <p role="alert">{player.error}</p>
+            </details>
+            {player.status === 'error' && (
+              <button
+                className="icon-button"
+                aria-label="Try again"
+                title="Try again"
+                onClick={player.retry}
+              >
+                <RotateCcw size={18} />
+              </button>
+            )}
+          </div>
+        )}
       </section>
-      <p className="footnote">
-        First use downloads a 172 MB model. Separation can take a few minutes.
-        <br />
-        Works best in desktop Chrome or Edge. Your audio is never uploaded.
-      </p>
     </main>
   );
 }

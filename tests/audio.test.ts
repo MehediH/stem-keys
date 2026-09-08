@@ -7,6 +7,17 @@ function fixture(resume = async () => {}) {
     levels: number[] = [];
   const context = {
     currentTime: 12,
+    sampleRate: 44100,
+    createAnalyser: () => ({
+      connect() {},
+      disconnect() {},
+      getByteFrequencyData(a: Uint8Array) {
+        a.fill(0);
+      },
+      getFloatTimeDomainData(a: Float32Array) {
+        a.fill(0);
+      },
+    }),
     destination: {},
     resume,
     close: async () => {},

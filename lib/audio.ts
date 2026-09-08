@@ -23,28 +23,16 @@ export function timeLabel(seconds: number) {
   const s = Math.max(0, Math.floor(seconds));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
-export function waveform(samples: Float32Array) {
-  const peaks = Array.from({ length: 100 }, (_, bin) => {
-    let peak = 0;
-    const start = Math.floor((bin * samples.length) / 100),
-      end = Math.floor(((bin + 1) * samples.length) / 100);
-    for (let i = start; i < end; i++)
-      peak = Math.max(peak, Math.abs(samples[i]));
-    return peak;
-  });
-  const max = Math.max(0.001, ...peaks);
-  return peaks
-    .map(
-      (p, i) =>
-        `M${i * 2 + 1},${40 - (p / max) * 36}v${Math.max(1, (p / max) * 72)}`,
-    )
-    .join(' ');
-}
+export type AudioVisual = { texture: Uint8Array<ArrayBuffer>; power: number };
 
 export class StemPlayer {
   context: AudioContext;
   private buffers: AudioBuffer[];
   private gains: GainNode[];
+  private analysers: AnalyserNode[];
+  private visuals: AudioVisual[];
+  private frequency = new Uint8Array(1024);
+  private wave = new Float32Array(2048);
   private sources: AudioBufferSourceNode[] = [];
   private offset = 0;
   private startedAt = 0;
@@ -68,9 +56,26 @@ export class StemPlayer {
     limiter.attack.value = 0.003;
     limiter.release.value = 0.1;
     limiter.connect(context.destination);
-    this.gains = this.buffers.map(() => {
+    this.analysers = this.buffers.map(() => {
+      const analyser = context.createAnalyser();
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.72;
+      analyser.minDecibels = -80;
+      analyser.maxDecibels = -15;
+      analyser.connect(limiter);
+      return analyser;
+    });
+    this.visuals = this.buffers.map(() => {
+      const texture = new Uint8Array(256 * 4);
+      for (let i = 0; i < 256; i++) {
+        texture[i * 4 + 1] = 128;
+        texture[i * 4 + 3] = 255;
+      }
+      return { texture, power: 0 };
+    });
+    this.gains = this.buffers.map((_, i) => {
       const gain = context.createGain();
-      gain.connect(limiter);
+      gain.connect(this.analysers[i]);
       return gain;
     });
   }
@@ -123,9 +128,33 @@ export class StemPlayer {
       ),
     );
   }
+  readVisual(index: number) {
+    const visual = this.visuals[index];
+    if (!this.playing) return visual;
+    const analyser = this.analysers[index];
+    analyser.getByteFrequencyData(this.frequency);
+    analyser.getFloatTimeDomainData(this.wave);
+    let sum = 0;
+    for (const value of this.wave) sum += value * value;
+    visual.power = Math.min(1, Math.sqrt(sum / this.wave.length) * 5);
+    for (let i = 0; i < 256; i++) {
+      // Logarithmic bins preserve the low-end detail that linear FFT plots lose.
+      const hz = 25 * Math.pow(16000 / 25, i / 255);
+      const bin = Math.min(
+        1023,
+        Math.round((hz * 2048) / this.context.sampleRate),
+      );
+      visual.texture[i * 4] = this.frequency[bin];
+      visual.texture[i * 4 + 1] = Math.round(
+        (Math.max(-1, Math.min(1, this.wave[i * 8])) + 1) * 127.5,
+      );
+    }
+    return visual;
+  }
   dispose() {
     this.pause();
     for (const gain of this.gains) gain.disconnect();
+    for (const analyser of this.analysers) analyser.disconnect();
     this.buffers = [];
     void this.context.close();
   }

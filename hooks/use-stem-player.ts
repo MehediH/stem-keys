@@ -6,8 +6,6 @@ import {
   audible,
   initialMix,
   StemPlayer,
-  STEMS,
-  waveform,
   type Mix,
   type StemAudio,
 } from '@/lib/audio';
@@ -23,7 +21,6 @@ export function useStemPlayer() {
   const [duration, setDuration] = useState(0);
   const [position, setPosition] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [paths, setPaths] = useState<string[]>([]);
   const [mix, setMixState] = useState(initialMix);
   const mixRef = useRef(mix);
   const engine = useRef<StemPlayer | null>(null);
@@ -135,7 +132,6 @@ export function useStemPlayer() {
     setPlaying(false);
     setDuration(0);
     setPosition(0);
-    setPaths([]);
     setMix(initialMix());
     let phase: 'setup' | 'decode' | 'worker' = 'setup';
     try {
@@ -193,7 +189,6 @@ export function useStemPlayer() {
             engine.current = player;
             decodingContext.current = null;
             setDuration(player.duration);
-            setPaths(STEMS.map((s) => waveform(result.stems![s.id].left)));
             player.setMix(mixRef.current);
             setStatus('ready');
             setStage('');
@@ -293,7 +288,7 @@ export function useStemPlayer() {
     duration,
     position,
     playing,
-    paths,
+    engine,
     mix,
     loadFile,
     cancel,
