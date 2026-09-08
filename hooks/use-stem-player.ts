@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 // oxlint-disable-next-line import/default -- Vite's ?worker transform exports this constructor.
 import SeparationWorker from '../workers/separate.worker.ts?worker';
+import { fingerprintAudio } from '@/lib/visual-identity';
 import {
   toggleChannel,
   toggleGroup,
@@ -146,6 +147,7 @@ export function useStemPlayer() {
       const right = audio
         .getChannelData(Math.min(1, audio.numberOfChannels - 1))
         .slice();
+      const songFingerprint = fingerprintAudio(left, right);
       phase = 'worker';
       const task = new SeparationWorker();
       worker.current = task;
@@ -181,7 +183,11 @@ export function useStemPlayer() {
           fail(result.message || 'Separation failed. Please retry.');
         if (result.type === 'complete' && result.stems) {
           try {
-            const player = new StemPlayer(context, result.stems);
+            const player = new StemPlayer(
+              context,
+              result.stems,
+              songFingerprint,
+            );
             engine.current = player;
             decodingContext.current = null;
             setDuration(player.duration);

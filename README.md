@@ -4,7 +4,7 @@ A browser stem player: open an MP3, separate vocals/drums/bass/other, then mix w
 
 ## Visuals
 
-The interface uses royal blue and white, with no permanent text or number labels. Track names and shortcuts appear only in hover hints or on keyboard focus. Controls are icons with accessible labels and shortcut tooltips. Four edge-to-edge WebGL halftone forms—a ribbon, a torus, a sphere, and a folded contour—give each stem its own visual identity, fed by a pre-gain AnalyserNode: logarithmic frequency bands drive dot size and the live waveform shapes the field. Muted stems keep reacting to their own frequencies at reduced brightness; enabling a stem lights it up. Volume and mute only affect the audio gain, so all four visuals follow the song throughout playback. Paused visuals freeze. Reduced-motion settings use static halftones, and browsers without WebGL get a CSS dot fallback. The renderer runs entirely in the browser.
+The interface uses royal blue and white, with no permanent text or number labels. Track names and shortcuts appear only in hover hints or on keyboard focus. Controls are icons with accessible labels and shortcut tooltips. Each song gets its own deterministic set of halftones. A fingerprint of the decoded stereo audio assigns four distinct form families and varies their orientation, proportions, folds, and dot spacing. Short windows across each separated stem measure roughness, dynamics, and stereo width to further shape the result. The forms are fed by a pre-gain AnalyserNode: logarithmic frequency bands drive dot size and the live waveform shapes the field. Muted stems keep reacting to their own frequencies at reduced brightness; enabling a stem lights it up. Volume and mute only affect the audio gain, so all four visuals follow the song throughout playback. Paused visuals freeze. Reduced-motion settings use static halftones, and browsers without WebGL get a CSS dot fallback. The renderer runs entirely in the browser.
 
 ## Controls
 
@@ -33,7 +33,7 @@ Separation code uses the MIT-licensed `demucs-web` spectral helpers. Model sourc
 ## Validation
 
 - `npx tsc --noEmit`
-- `node --experimental-strip-types --test tests/audio.test.ts`: shared audio clock, pause/seek/resume, end-of-track, additive group selection, mix/volume restoration, separate visual signals, and cancellation during AudioContext resume.
+- `node --experimental-strip-types --test tests/audio.test.ts tests/visual-identity.test.ts`: repeatable audio-derived identities, distinct per-song forms, stem texture measurements, shared audio clock, pause/seek/resume, end-of-track, additive group selection, mix/volume restoration, separate visual signals, and cancellation during AudioContext resume.
 - Changed product files pass oxlint. The generated, unchanged component catalog has existing lint findings.
 - Real 8-second stereo MP3 sample from the upstream Demucs repository: four finite, non-silent stems; exact sample lengths; correct progress across two overlapping sections. Sum reconstruction: 30.77 dB signal-to-error ratio in both native ONNX and ONNX Runtime Web WASM. WASM took about 20 seconds on the development machine; this is not a browser speed guarantee.
 - Production build and HTTP route response checked.

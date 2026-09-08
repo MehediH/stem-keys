@@ -1,3 +1,7 @@
+import {
+  createVisualIdentity,
+  type VisualIdentity,
+} from './visual-identity.ts';
 export const STEMS = [
   { id: 'vocals', label: 'Vocals' },
   { id: 'drums', label: 'Drums' },
@@ -43,6 +47,7 @@ export class StemPlayer {
   private gains: GainNode[];
   private analysers: AnalyserNode[];
   private visuals: AudioVisual[];
+  readonly identities: VisualIdentity[];
   private frequency = new Uint8Array(1024);
   private wave = new Float32Array(2048);
   private sources: AudioBufferSourceNode[] = [];
@@ -51,8 +56,16 @@ export class StemPlayer {
   private revision = 0;
   playing = false;
   duration: number;
-  constructor(context: AudioContext, stems: StemAudio) {
+  constructor(context: AudioContext, stems: StemAudio, songFingerprint = 0) {
     this.context = context;
+    this.identities = STEMS.map(({ id }, index) =>
+      createVisualIdentity(
+        songFingerprint,
+        index,
+        stems[id].left,
+        stems[id].right,
+      ),
+    );
     this.buffers = STEMS.map(({ id }) => {
       const data = stems[id];
       const buffer = context.createBuffer(2, data.left.length, SAMPLE_RATE);

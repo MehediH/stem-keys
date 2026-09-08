@@ -31,6 +31,7 @@ export function Halftone({
       renderer.draw(
         reduced.matches ? null : (player?.readVisual(index) ?? null),
         reduced.matches ? 0 : (player?.position ?? 0),
+        player?.identities[index],
       );
     };
     frame = requestAnimationFrame(draw);
