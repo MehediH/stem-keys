@@ -2,6 +2,10 @@
 
 A browser stem player: open an MP3, separate vocals/drums/bass/other, then mix with the keyboard. All audio decoding, separation, and playback happen on the user's device. No audio is sent to the server or stored there.
 
+## Visuals
+
+The interface uses royal blue and white, with only the four stem names shown during normal playback. Controls are icons with accessible labels and shortcut tooltips. Each stem has its own WebGL halftone field, fed by a post-gain AnalyserNode: logarithmic frequency bands drive dot size and the live waveform shapes the field. Muting affects both the sound and the visual signal. Paused visuals freeze. Reduced-motion settings use static halftones, and browsers without WebGL get a CSS dot fallback. The renderer runs entirely in the browser.
+
 ## Controls
 
 - Space: play/pause (except the file chooser and native input controls).
@@ -14,7 +18,7 @@ A browser stem player: open an MP3, separate vocals/drums/bass/other, then mix w
 ## Run
 
 Node 22.13+ and npm. Run `npm ci`, then `npm run dev`.
-`npm run build` creates the Sites deployment. The project identity is in `.openai/hosting.json`.
+`npm run build` creates the Sites deployment. For browser verification use `npm run build` followed by `npm run start -- --port 3000`; the production preview avoids the development runtime injecting window-only hot-reload code into audio workers. The project identity is in `.openai/hosting.json`.
 
 ## Separation
 

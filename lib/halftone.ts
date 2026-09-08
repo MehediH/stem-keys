@@ -161,7 +161,6 @@ export function createHalftone(canvas: HTMLCanvasElement, variant: number) {
       gl.deleteBuffer(buffer);
       gl.deleteProgram(program);
       shaders.forEach((s) => gl.deleteShader(s));
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
     },
   };
 }

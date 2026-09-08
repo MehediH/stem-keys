@@ -5,19 +5,27 @@ import { StemPlayer, initialMix, STEMS } from '../lib/audio.ts';
 function fixture(resume = async () => {}) {
   const starts: { at: number; offset: number }[] = [],
     levels: number[] = [];
+  const analyserFrames: { frequency: number; amplitude: number }[] = [];
   const context = {
     currentTime: 12,
     sampleRate: 44100,
-    createAnalyser: () => ({
-      connect() {},
-      disconnect() {},
-      getByteFrequencyData(a: Uint8Array) {
-        a.fill(0);
-      },
-      getFloatTimeDomainData(a: Float32Array) {
-        a.fill(0);
-      },
-    }),
+    createAnalyser: () => {
+      const frame = {
+        frequency: (analyserFrames.length + 1) * 40,
+        amplitude: (analyserFrames.length + 1) * 0.02,
+      };
+      analyserFrames.push(frame);
+      return {
+        connect() {},
+        disconnect() {},
+        getByteFrequencyData(a: Uint8Array) {
+          a.fill(frame.frequency);
+        },
+        getFloatTimeDomainData(a: Float32Array) {
+          a.fill(frame.amplitude);
+        },
+      };
+    },
     destination: {},
     resume,
     close: async () => {},
@@ -61,6 +69,7 @@ function fixture(resume = async () => {}) {
   );
   return {
     context,
+    analyserFrames,
     starts,
     levels,
     player: new StemPlayer(context as unknown as AudioContext, stems as never),
@@ -121,5 +130,24 @@ test('cancelled audio resume cannot start stale sources', async () => {
   await pending;
   assert.equal(f.player.playing, false);
   assert.equal(f.starts.length, 0);
+  f.player.dispose();
+});
+
+test('visuals read separate stem signals and freeze while paused', async () => {
+  const f = fixture();
+  await f.player.play();
+  const first = f.player.readVisual(0),
+    second = f.player.readVisual(1);
+  assert.equal(first.texture[0], 40);
+  assert.equal(second.texture[0], 80);
+  assert.ok(second.power > first.power);
+  assert.notEqual(first.texture, second.texture);
+  f.player.pause();
+  f.analyserFrames[0].frequency = 0;
+  f.analyserFrames[0].amplitude = 0;
+  assert.equal(f.player.readVisual(0).texture[0], 40);
+  await f.player.play();
+  assert.equal(f.player.readVisual(0).texture[0], 0);
+  assert.equal(f.player.readVisual(0).power, 0);
   f.player.dispose();
 });
