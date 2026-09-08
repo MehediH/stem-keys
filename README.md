@@ -33,7 +33,8 @@ Separation code uses the MIT-licensed `demucs-web` spectral helpers. Model sourc
 - Changed product files pass oxlint. The generated, unchanged component catalog has existing lint findings.
 - Real 8-second stereo MP3 sample from the upstream Demucs repository: four finite, non-silent stems; exact sample lengths; correct progress across two overlapping sections. Sum reconstruction: 30.77 dB signal-to-error ratio in both native ONNX and ONNX Runtime Web WASM. WASM took about 20 seconds on the development machine; this is not a browser speed guarantee.
 - Production build and HTTP route response checked.
-- Browser interactions and GPU execution have not been exercised by an automated browser run. Optional WebMCP tools are feature-detected; no live WebMCP validation context was available.
+- Browser regression check: the reported 2:51, 48 kHz stereo MP3 decoded, completed all 30 separation sections using WebGPU, and reached active playback in the production build. Muted stem state and an advancing playback clock were observed; no browser errors were logged. WebMCP read-back and invalid-input rejection were also checked.
+- Worker constructors use Vite’s `?worker` import so the deployed script loads from the site origin. Worker startup errors are reported separately from decoding failures.
 
 ## Troubleshooting
 
