@@ -14,7 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Stem Keys — your keyboard, your mix',
-  description: 'Open an MP3, separate four stems, and play your own mix with keyboard shortcuts. Audio stays on your device.',
+  description:
+    'Open an MP3, separate four stems, and play your own mix with keyboard shortcuts. Audio stays on your device.',
 };
 
 export default function RootLayout({
