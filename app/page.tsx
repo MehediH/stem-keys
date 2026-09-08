@@ -84,8 +84,8 @@ export default function Home() {
                   }
                 >
                   <Halftone index={i} engine={player.engine} />
-                  <span className="stem-number" aria-hidden="true">
-                    {i + 1}
+                  <span className="stem-hint" aria-hidden="true">
+                    {i + 1} · {stem.label}
                   </span>
                   <span className="stem-light" aria-hidden="true" />
                 </button>

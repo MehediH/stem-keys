@@ -4,7 +4,7 @@ A browser stem player: open an MP3, separate vocals/drums/bass/other, then mix w
 
 ## Visuals
 
-The interface uses royal blue and white, with only oversized 1–4 markers shown during normal playback. Controls are icons with accessible labels and shortcut tooltips. Four edge-to-edge WebGL halftone forms—a ribbon, a torus, a sphere, and a folded contour—give each stem its own visual identity, fed by a post-gain AnalyserNode: logarithmic frequency bands drive dot size and the live waveform shapes the field. Muting affects both the sound and the visual signal. Paused visuals freeze. Reduced-motion settings use static halftones, and browsers without WebGL get a CSS dot fallback. The renderer runs entirely in the browser.
+The interface uses royal blue and white, with no permanent text or number labels. Track names and shortcuts appear only in hover hints or on keyboard focus. Controls are icons with accessible labels and shortcut tooltips. Four edge-to-edge WebGL halftone forms—a ribbon, a torus, a sphere, and a folded contour—give each stem its own visual identity, fed by a post-gain AnalyserNode: logarithmic frequency bands drive dot size and the live waveform shapes the field. Muting affects both the sound and the visual signal. Paused visuals freeze. Reduced-motion settings use static halftones, and browsers without WebGL get a CSS dot fallback. The renderer runs entirely in the browser.
 
 ## Controls
 

@@ -106,23 +106,19 @@ summary:focus-visible {
   opacity: 1;
   transition: opacity 0.3s;
 }
-.stem-number {
+.stem-hint {
   position: absolute;
-  top: 18px;
-  left: 25px;
-  font-size: clamp(76px, 11.5vw, 174px);
-  line-height: 0.9;
-  letter-spacing: -0.085em;
-  font-weight: 750;
-  color: transparent;
-  -webkit-text-stroke: 1.5px #f7f8f2;
-  user-select: none;
-  transition: color 0.2s;
-  mix-blend-mode: screen;
-}
-.audible .stem-number {
+  top: 22px;
+  left: 22px;
+  padding: 6px 9px;
+  background: #163cdb;
   color: #f7f8f2;
-  -webkit-text-stroke: 0;
+  font-size: 12px;
+  opacity: 0;
+  pointer-events: none;
+}
+.stem-face:focus-visible .stem-hint {
+  opacity: 1;
 }
 .stem-light {
   position: absolute;
@@ -143,12 +139,6 @@ summary:focus-visible {
 }
 .muted .halftone {
   opacity: 0.2;
-}
-.muted .stem-number {
-  opacity: 0.4;
-}
-.stem-face:hover .stem-number {
-  color: #f7f8f2;
 }
 .stem-controls {
   position: absolute;
@@ -306,11 +296,6 @@ summary:focus-visible {
   }
   .stem-grid {
     grid-template-rows: repeat(2, minmax(210px, calc((100svh - 112px) /2)));
-  }
-  .stem-number {
-    font-size: clamp(76px, 20vw, 120px);
-    top: 18px;
-    left: 15px;
   }
   .stem-light {
     right: 16px;
