@@ -1,5 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+// oxlint-disable-next-line import/default -- Vite's ?worker transform exports this constructor.
+import SeparationWorker from '../workers/separate.worker.ts?worker';
 import {
   audible,
   initialMix,
@@ -135,9 +137,11 @@ export function useStemPlayer() {
     setPosition(0);
     setPaths([]);
     setMix(initialMix());
+    let phase: 'setup' | 'decode' | 'worker' = 'setup';
     try {
       const context = new AudioContext({ sampleRate: 44100 });
       decodingContext.current = context;
+      phase = 'decode';
       const audio = await context.decodeAudioData(await file.arrayBuffer());
       if (job.current !== currentJob) return;
       if (audio.duration > 600)
@@ -150,10 +154,8 @@ export function useStemPlayer() {
       const right = audio
         .getChannelData(Math.min(1, audio.numberOfChannels - 1))
         .slice();
-      const task = new Worker(
-        new URL('../workers/separate.worker.ts', import.meta.url),
-        { type: 'module' },
-      );
+      phase = 'worker';
+      const task = new SeparationWorker();
       worker.current = task;
       const fail = (message: string) => {
         if (job.current !== currentJob) return;
@@ -209,12 +211,17 @@ export function useStemPlayer() {
       task.postMessage({ left, right }, [left.buffer, right.buffer]);
     } catch (cause) {
       if (job.current !== currentJob) return;
+      console.error(`Stem player ${phase} failed`, cause);
       stopWork();
       setStatus('error');
       setError(
         cause instanceof Error && cause.message.startsWith('Choose')
           ? cause.message
-          : 'This file could not be read as audio. Try another MP3.',
+          : phase === 'worker'
+            ? 'Your audio loaded, but the separation worker could not start. Please reload the page and try again.'
+            : phase === 'setup'
+              ? 'Audio could not start in this browser. Please reload the page and try again.'
+              : 'This file could not be read as audio. Try another MP3.',
       );
     }
   }
