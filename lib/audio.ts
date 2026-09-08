@@ -74,7 +74,6 @@ export class StemPlayer {
       analyser.smoothingTimeConstant = 0.72;
       analyser.minDecibels = -80;
       analyser.maxDecibels = -15;
-      analyser.connect(limiter);
       return analyser;
     });
     this.visuals = this.buffers.map(() => {
@@ -87,7 +86,9 @@ export class StemPlayer {
     });
     this.gains = this.buffers.map((_, i) => {
       const gain = context.createGain();
-      gain.connect(this.analysers[i]);
+      // Analyse the raw stem so muting changes brightness, not its motion.
+      this.analysers[i].connect(gain);
+      gain.connect(limiter);
       return gain;
     });
   }
@@ -109,7 +110,7 @@ export class StemPlayer {
     this.sources = this.buffers.map((buffer, i) => {
       const source = this.context.createBufferSource();
       source.buffer = buffer;
-      source.connect(this.gains[i]);
+      source.connect(this.analysers[i]);
       source.start(this.startedAt, this.offset);
       return source;
     });
