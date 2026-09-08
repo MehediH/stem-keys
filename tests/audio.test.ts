@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { StemPlayer, initialMix, STEMS } from '../lib/audio.ts';
+import {
+  StemPlayer,
+  initialMix,
+  STEMS,
+  toggleGroup,
+  toggleChannel,
+  audible,
+} from '../lib/audio.ts';
 
 function fixture(resume = async () => {}) {
   const starts: { at: number; offset: number }[] = [],
@@ -102,14 +109,14 @@ test('all stems share one audio clock through pause, seek, and resume', async ()
   f.player.dispose();
 });
 
-test('solo temporarily overrides mutes and preserves per-stem volume', () => {
+test('a selected group overrides mutes and preserves per-stem volume', () => {
   const f = fixture();
   const mix = initialMix();
   mix.enabled[0] = false;
   mix.volumes[1] = 35;
   f.player.setMix(mix);
   assert.deepEqual(f.levels, [0, 0.35, 1, 1]);
-  f.player.setMix({ ...mix, solo: 0 });
+  f.player.setMix({ ...mix, group: [0] });
   assert.deepEqual(f.levels, [1, 0, 0, 0]);
   f.player.setMix(mix);
   assert.deepEqual(f.levels, [0, 0.35, 1, 1]);
@@ -150,4 +157,26 @@ test('visuals read separate stem signals and freeze while paused', async () => {
   assert.equal(f.player.readVisual(0).texture[0], 0);
   assert.equal(f.player.readVisual(0).power, 0);
   f.player.dispose();
+});
+
+test('Shift 1, 2, 3 builds an additive group and repeat presses remove members', () => {
+  let mix = initialMix();
+  mix = toggleGroup(mix, 0);
+  mix = toggleGroup(mix, 1);
+  mix = toggleGroup(mix, 2);
+  assert.deepEqual(
+    [0, 1, 2, 3].map((i) => audible(mix, i)),
+    [true, true, true, false],
+  );
+  mix = toggleGroup(mix, 1);
+  assert.deepEqual(mix.group, [0, 2]);
+  mix = toggleChannel(mix, 3);
+  assert.equal(mix.group, null);
+  assert.deepEqual(mix.enabled, [true, false, true, true]);
+});
+
+test('leaving the last selected stem restores the previous mix', () => {
+  const original = { ...initialMix(), enabled: [false, true, false, true] };
+  const restored = toggleGroup(toggleGroup(original, 0), 0);
+  assert.deepEqual(restored, original);
 });

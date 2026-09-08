@@ -4,16 +4,16 @@ A browser stem player: open an MP3, separate vocals/drums/bass/other, then mix w
 
 ## Visuals
 
-The interface uses royal blue and white, with only the four stem names shown during normal playback. Controls are icons with accessible labels and shortcut tooltips. Each stem has its own WebGL halftone field, fed by a post-gain AnalyserNode: logarithmic frequency bands drive dot size and the live waveform shapes the field. Muting affects both the sound and the visual signal. Paused visuals freeze. Reduced-motion settings use static halftones, and browsers without WebGL get a CSS dot fallback. The renderer runs entirely in the browser.
+The interface uses royal blue and white, with only oversized 1–4 markers shown during normal playback. Controls are icons with accessible labels and shortcut tooltips. Four edge-to-edge WebGL halftone forms—a ribbon, a torus, a sphere, and a folded contour—give each stem its own visual identity, fed by a post-gain AnalyserNode: logarithmic frequency bands drive dot size and the live waveform shapes the field. Muting affects both the sound and the visual signal. Paused visuals freeze. Reduced-motion settings use static halftones, and browsers without WebGL get a CSS dot fallback. The renderer runs entirely in the browser.
 
 ## Controls
 
 - Space: play/pause (except the file chooser and native input controls).
 - 1–4: toggle vocals, drums, bass, and other.
-- Shift + 1–4: solo a stem; repeat to restore the previous mix.
+- Hold Shift and press 1, 2, 3: select those three stems and start them together. Repeat a shifted number to remove it; removing the last member restores the previous mix. Shift-click works too.
 - 0: reset all stems and volumes.
 - R: return to the beginning.
-- Sliders: individual volume and playback position.
+- Sliders: individual volume (revealed on hover/focus; always available on touch) and playback position.
 
 ## Run
 
@@ -33,7 +33,7 @@ Separation code uses the MIT-licensed `demucs-web` spectral helpers. Model sourc
 ## Validation
 
 - `npx tsc --noEmit`
-- `node --experimental-strip-types --test tests/audio.test.ts`: shared audio clock, pause/seek/resume, end-of-track, solo/volume restoration, and cancellation during AudioContext resume.
+- `node --experimental-strip-types --test tests/audio.test.ts`: shared audio clock, pause/seek/resume, end-of-track, additive group selection, mix/volume restoration, separate visual signals, and cancellation during AudioContext resume.
 - Changed product files pass oxlint. The generated, unchanged component catalog has existing lint findings.
 - Real 8-second stereo MP3 sample from the upstream Demucs repository: four finite, non-silent stems; exact sample lengths; correct progress across two overlapping sections. Sum reconstruction: 30.77 dB signal-to-error ratio in both native ONNX and ONNX Runtime Web WASM. WASM took about 20 seconds on the development machine; this is not a browser speed guarantee.
 - Production build and HTTP route response checked.

@@ -54,7 +54,7 @@ export function registerPlayerTools(getPlayer: () => Player) {
   register({
     name: 'set_stem_volume',
     description:
-      'Set one loaded stem volume from 0 to 100. Does not change mute or solo choices.',
+      'Set one loaded stem volume from 0 to 100. Does not change mute or group choices.',
     inputSchema: {
       type: 'object',
       properties: {

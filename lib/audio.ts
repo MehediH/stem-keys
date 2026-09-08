@@ -13,15 +13,27 @@ export const SAMPLE_RATE = 44100;
 export const initialMix = () => ({
   enabled: [true, true, true, true],
   volumes: [100, 100, 100, 100],
-  solo: null as number | null,
+  group: null as number[] | null,
 });
 export type Mix = ReturnType<typeof initialMix>;
 export function audible(mix: Mix, i: number) {
-  return mix.solo === null ? mix.enabled[i] : mix.solo === i;
+  return mix.group === null ? mix.enabled[i] : mix.group.includes(i);
 }
-export function timeLabel(seconds: number) {
-  const s = Math.max(0, Math.floor(seconds));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+export function toggleGroup(mix: Mix, index: number): Mix {
+  const selected = mix.group ?? [];
+  const group = selected.includes(index)
+    ? selected.filter((i) => i !== index)
+    : [...selected, index];
+  return { ...mix, group: group.length ? group : null };
+}
+export function toggleChannel(mix: Mix, index: number): Mix {
+  return {
+    ...mix,
+    group: null,
+    enabled: mix.enabled.map((_, i) =>
+      i === index ? !audible(mix, i) : audible(mix, i),
+    ),
+  };
 }
 export type AudioVisual = { texture: Uint8Array<ArrayBuffer>; power: number };
 

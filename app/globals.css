@@ -16,17 +16,17 @@
 .dark {
   color-scheme: dark;
   --background: #163cdb;
-  --foreground: #f4f5f0;
-  --primary: #f4f5f0;
+  --foreground: #f7f8f2;
+  --primary: #f7f8f2;
   --primary-foreground: #163cdb;
   --muted: #ffffff30;
   --muted-foreground: #d6ddff;
   --ring: #fff;
   --border: #ffffff32;
   --card: #163cdb;
-  --card-foreground: #f4f5f0;
+  --card-foreground: #f7f8f2;
   --popover: #1535b7;
-  --popover-foreground: #f4f5f0;
+  --popover-foreground: #f7f8f2;
   --accent: #ffffff18;
   --accent-foreground: #fff;
   --input: #ffffff40;
@@ -54,125 +54,155 @@ button:disabled {
 button:focus-visible,
 summary:focus-visible {
   outline: 2px solid white;
-  outline-offset: 5px;
+  outline-offset: -6px;
 }
 .blue-room {
   min-height: 100svh;
+  padding: 18px 24px;
   display: grid;
   place-items: center;
-  padding: 48px 24px;
 }
 .instrument {
-  width: min(100%, 680px);
+  width: min(100%, 1440px);
   position: relative;
-  transition: box-shadow 0.2s;
 }
 .instrument.dragging {
-  box-shadow: 0 0 0 18px #ffffff15;
-  outline: 1px dashed white;
-  outline-offset: 18px;
+  outline: 2px dashed white;
+  outline-offset: 8px;
 }
 .stem-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 32px 36px;
+  grid-template-rows: repeat(2, minmax(230px, calc((100svh - 130px) /2)));
+  border: 1px solid #ffffff30;
 }
 .stem {
+  position: relative;
   min-width: 0;
+  overflow: hidden;
+}
+.stem:nth-child(odd) {
+  border-right: 1px solid #ffffff30;
+}
+.stem:nth-child(-n + 2) {
+  border-bottom: 1px solid #ffffff30;
 }
 .stem-face {
   position: relative;
   display: block;
   width: 100%;
-  height: 235px;
+  height: 100%;
   border: 0;
   padding: 0;
   background: transparent;
   text-align: left;
   overflow: hidden;
-  border-radius: 2px;
 }
 .halftone {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.94;
-  transition: opacity 0.28s;
+  opacity: 1;
+  transition: opacity 0.3s;
 }
-.stem-name {
+.stem-number {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 19px;
-  font-weight: 450;
-  letter-spacing: -0.45px;
-  padding: 30px 0 0;
-  background: linear-gradient(transparent, var(--background) 67%);
+  top: 18px;
+  left: 25px;
+  font-size: clamp(76px, 11.5vw, 174px);
+  line-height: 0.9;
+  letter-spacing: -0.085em;
+  font-weight: 750;
+  color: transparent;
+  -webkit-text-stroke: 1.5px #f7f8f2;
+  user-select: none;
+  transition: color 0.2s;
+  mix-blend-mode: screen;
 }
-.stem-name i {
-  width: 5px;
-  height: 5px;
-  background: currentColor;
+.audible .stem-number {
+  color: #f7f8f2;
+  -webkit-text-stroke: 0;
+}
+.stem-light {
+  position: absolute;
+  top: 28px;
+  right: 28px;
+  height: 7px;
+  width: 7px;
+  border: 1px solid #f7f8f2;
   border-radius: 50%;
-  margin-right: 3px;
 }
-.stem.muted .halftone {
-  opacity: 0.28;
+.audible .stem-light {
+  background: #f7f8f2;
 }
-.stem.muted .stem-name {
-  color: #ccd5ff99;
+.selected .stem-light {
+  box-shadow:
+    0 0 0 5px #163cdb,
+    0 0 0 6px #ffffffb0;
 }
-.stem.muted .stem-name i {
-  background: transparent;
-  border: 1px solid currentColor;
+.muted .halftone {
+  opacity: 0.2;
+}
+.muted .stem-number {
+  opacity: 0.4;
+}
+.stem-face:hover .stem-number {
+  color: #f7f8f2;
 }
 .stem-controls {
+  position: absolute;
+  bottom: 22px;
+  left: 27px;
+  right: 27px;
+  height: 24px;
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding-top: 15px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.stem:hover .stem-controls,
+.stem:focus-within .stem-controls {
+  opacity: 1;
+  pointer-events: auto;
 }
 .stem-controls [data-slot='slider-track'],
 .timeline [data-slot='slider-track'] {
   height: 1px;
   border-radius: 0;
-  background: #ffffff30;
+  background: #ffffff45;
 }
 .stem-controls [data-slot='slider-thumb'],
 .timeline [data-slot='slider-thumb'] {
   height: 7px;
   width: 7px;
   border: 0;
-  background: #f4f5f0;
+  background: #f7f8f2;
   box-shadow: none;
 }
 .stem-controls [data-slot='slider-range'],
 .timeline [data-slot='slider-range'] {
-  background: #f4f5f0;
+  background: #f7f8f2;
 }
-.stem-controls [data-slot='slider-thumb'] {
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-.stem-controls:hover [data-slot='slider-thumb'],
-.stem-controls:focus-within [data-slot='slider-thumb'] {
-  opacity: 1;
+.transport {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: min(100%, 540px);
+  margin: 18px auto 0;
+  padding: 0 5px;
 }
 .icon-button {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   flex-shrink: 0;
   border: 0;
   display: grid;
   place-items: center;
   background: transparent;
-  color: #f4f5f0;
-  opacity: 0.72;
+  color: #f7f8f2;
+  opacity: 0.75;
   padding: 0;
   transition:
     opacity 0.15s,
@@ -181,59 +211,41 @@ summary:focus-visible {
 }
 .icon-button:hover {
   opacity: 1;
-  background: #ffffff0d;
+  background: #ffffff12;
 }
 .icon-button:disabled {
-  opacity: 0.32;
-}
-.icon-button.solo {
-  width: 26px;
-  height: 26px;
-  opacity: 0.5;
-}
-.icon-button.solo[aria-pressed='true'] {
-  opacity: 1;
-  background: white;
-  color: #163cdb;
-}
-.transport {
-  display: flex;
-  align-items: center;
-  gap: 17px;
-  margin-top: 34px;
-  padding-top: 22px;
-  border-top: 1px solid #ffffff30;
+  opacity: 0.3;
 }
 .play-button {
   display: grid;
   place-items: center;
-  border: 1px solid #ffffff80;
+  border: 1px solid #ffffffa0;
   border-radius: 50%;
-  background: transparent;
-  height: 51px;
-  width: 51px;
+  background: #f7f8f2;
+  color: #163cdb;
+  height: 48px;
+  width: 48px;
   flex-shrink: 0;
   padding: 0;
-  transition:
-    background 0.15s,
-    color 0.15s;
+  transition: transform 0.15s;
 }
 .play-button:hover:not(:disabled) {
-  background: white;
-  color: #163cdb;
+  transform: scale(1.06);
 }
 .play-button:disabled {
-  opacity: 0.32;
+  background: transparent;
+  color: #ffffff70;
+  border-color: #ffffff40;
 }
 .play-button svg.lucide-play {
   margin-left: 3px;
 }
 .timeline {
   flex: 1;
-  padding: 0 10px 0 6px;
+  padding: 0 8px;
 }
 .timeline [data-slot='progress-track'] {
-  height: 1px;
+  height: 2px;
   border-radius: 0;
 }
 .loading .cancel-icon {
@@ -254,13 +266,13 @@ summary:focus-visible {
   }
 }
 .error-state {
-  position: absolute;
-  top: calc(100% + 20px);
   display: flex;
   align-items: flex-start;
   gap: 12px;
   width: 100%;
   font-size: 14px;
+  margin: 16px auto 0;
+  max-width: 540px;
 }
 .error-state summary {
   list-style: none;
@@ -284,58 +296,52 @@ summary:focus-visible {
 .halftone-fallback {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle, #ffffffb3 1px, transparent 2px);
-  background-size: 7px 7px;
-  mask-image: radial-gradient(ellipse, black, transparent 68%);
+  background-image: radial-gradient(circle, #ffffffd0 2px, transparent 3px);
+  background-size: 8px 8px;
+  mask-image: radial-gradient(ellipse, black 15%, transparent 75%);
 }
 @media (max-width: 600px) {
   .blue-room {
-    padding: 32px 22px;
+    padding: 12px;
   }
   .stem-grid {
-    gap: 28px 22px;
+    grid-template-rows: repeat(2, minmax(210px, calc((100svh - 112px) /2)));
   }
-  .stem-face {
-    height: clamp(175px, 48vw, 235px);
+  .stem-number {
+    font-size: clamp(76px, 20vw, 120px);
+    top: 18px;
+    left: 15px;
   }
-  .stem-name {
-    font-size: 17px;
+  .stem-light {
+    right: 16px;
+    top: 22px;
+    width: 5px;
+    height: 5px;
   }
   .stem-controls {
-    gap: 10px;
-    padding-top: 12px;
+    left: 16px;
+    right: 16px;
+    bottom: 13px;
   }
   .transport {
-    gap: 8px;
-    margin-top: 28px;
-  }
-  .timeline {
-    padding: 0 7px;
-  }
-  .play-button {
-    height: 45px;
-    width: 45px;
+    gap: 12px;
+    margin-top: 14px;
   }
   .icon-button {
     width: 30px;
-    height: 34px;
+  }
+  .play-button {
+    width: 44px;
+    height: 44px;
+  }
+  .timeline {
+    padding: 0 4px;
   }
 }
-@media (max-height: 700px) and (min-width: 601px) {
-  .blue-room {
-    padding: 25px;
-  }
-  .instrument {
-    width: 600px;
-  }
-  .stem-face {
-    height: 185px;
-  }
-  .stem-grid {
-    gap: 24px 34px;
-  }
-  .transport {
-    margin-top: 24px;
+@media (hover: none) {
+  .stem-controls {
+    opacity: 0.55;
+    pointer-events: auto;
   }
 }
 @media (prefers-reduced-motion: reduce) {

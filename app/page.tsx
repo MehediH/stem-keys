@@ -9,7 +9,6 @@ import {
   SkipBack,
   X,
   LoaderCircle,
-  CircleDot,
   AlertCircle,
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
@@ -71,7 +70,7 @@ export default function Home() {
             return (
               <article
                 key={stem.id}
-                className={`stem ${ready && !on ? 'muted' : ''}`}
+                className={`stem ${ready && !on ? 'muted' : ''} ${ready && on ? 'audible' : ''} ${player.mix.group?.includes(i) ? 'selected' : ''}`}
               >
                 <button
                   className="stem-face"
@@ -79,14 +78,16 @@ export default function Home() {
                   aria-label={`${on ? 'Mute' : 'Unmute'} ${stem.label}`}
                   aria-pressed={ready && on}
                   aria-keyshortcuts={String(i + 1)}
-                  title={`${stem.label} · ${i + 1} to mute · Shift ${i + 1} to solo`}
-                  onClick={() => player.toggleStem(i)}
+                  title={`${i + 1} · ${stem.label} · Shift + click to play together`}
+                  onClick={(e) =>
+                    e.shiftKey ? player.selectStem(i) : player.toggleStem(i)
+                  }
                 >
                   <Halftone index={i} engine={player.engine} />
-                  <span className="stem-name">
-                    {stem.label}
-                    <i aria-hidden="true" />
+                  <span className="stem-number" aria-hidden="true">
+                    {i + 1}
                   </span>
+                  <span className="stem-light" aria-hidden="true" />
                 </button>
                 <div className="stem-controls">
                   <Slider
@@ -100,16 +101,6 @@ export default function Home() {
                     }
                     aria-label={`${stem.label} volume`}
                   />
-                  <button
-                    className="icon-button solo"
-                    disabled={!ready}
-                    aria-label={`Solo ${stem.label}`}
-                    aria-pressed={player.mix.solo === i}
-                    title={`Solo ${stem.label} · Shift ${i + 1}`}
-                    onClick={() => player.soloStem(i)}
-                  >
-                    <CircleDot size={17} strokeWidth={1.4} />
-                  </button>
                 </div>
               </article>
             );
@@ -195,7 +186,7 @@ export default function Home() {
             ? player.stage
             : ready
               ? `${player.name}. Ready.`
-              : 'Upload an MP3 to begin. Keys 1 through 4 toggle stems, Shift 1 through 4 solo, and Space plays or pauses.'}
+              : 'Upload an MP3 to begin. Keys 1 through 4 toggle stems, Shift plus multiple numbers selects and plays those stems together, and Space plays or pauses.'}
         </span>
         {player.error && (
           <div className="error-state">

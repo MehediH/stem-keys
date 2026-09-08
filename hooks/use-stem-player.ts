@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 // oxlint-disable-next-line import/default -- Vite's ?worker transform exports this constructor.
 import SeparationWorker from '../workers/separate.worker.ts?worker';
 import {
-  audible,
+  toggleChannel,
+  toggleGroup,
   initialMix,
   StemPlayer,
   type Mix,
@@ -36,20 +37,15 @@ export function useStemPlayer() {
     setMixState(next);
   }
   function toggleStem(i: number) {
-    if (!engine.current) return;
-    const current = mixRef.current;
-    // Leaving solo keeps the existing mute choices, then toggles the selected stem.
-    setMix({
-      ...current,
-      solo: null,
-      enabled: current.enabled.map((v, index) =>
-        index === i ? !audible(current, i) : v,
-      ),
-    });
+    if (engine.current) setMix(toggleChannel(mixRef.current, i));
   }
-  function soloStem(i: number) {
-    if (engine.current)
-      setMix({ ...mixRef.current, solo: mixRef.current.solo === i ? null : i });
+  function selectStem(i: number) {
+    if (!engine.current) return;
+    setMix(toggleGroup(mixRef.current, i));
+    // Several Shift+number events can arrive while AudioContext.resume is pending.
+    // Update the selection synchronously, and start the shared clock only once.
+    if (!engine.current.playing && !transportBusy.current)
+      void togglePlayback();
   }
   function volume(i: number, value: number) {
     if (engine.current)
@@ -223,12 +219,18 @@ export function useStemPlayer() {
   const actions = useRef({
     togglePlayback,
     toggleStem,
-    soloStem,
+    selectStem,
     resetMix,
     seek,
   });
   useEffect(() => {
-    actions.current = { togglePlayback, toggleStem, soloStem, resetMix, seek };
+    actions.current = {
+      togglePlayback,
+      toggleStem,
+      selectStem,
+      resetMix,
+      seek,
+    };
   });
   useEffect(() => {
     const keyboard = (e: KeyboardEvent) => {
@@ -246,7 +248,7 @@ export function useStemPlayer() {
       const index = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code);
       if (index >= 0) {
         e.preventDefault();
-        if (e.shiftKey) actions.current.soloStem(index);
+        if (e.shiftKey) actions.current.selectStem(index);
         else actions.current.toggleStem(index);
       } else if (
         e.code === 'Space' &&
@@ -296,7 +298,7 @@ export function useStemPlayer() {
       if (lastFile.current) void loadFile(lastFile.current);
     },
     toggleStem,
-    soloStem,
+    selectStem,
     volume,
     resetMix,
     togglePlayback,
