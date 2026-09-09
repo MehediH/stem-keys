@@ -39,8 +39,15 @@ def download(url, directory, report=lambda *_: None):
                 pass
     timer = threading.Timer(90, expire)
     timer.start()
+    failure = 'unavailable'
     try:
         for line in process.stdout:
+            if 'Sign in to confirm' in line:
+                failure = 'youtube_verification_required'
+            elif 'HTTP Error 403' in line:
+                failure = 'youtube_forbidden'
+            elif 'ERROR:' in line:
+                failure = 'download_or_conversion_error'
             if not line.startswith('stem-progress:'):
                 continue
             try:
@@ -65,6 +72,7 @@ def download(url, directory, report=lambda *_: None):
         process.stdout.close()
     audio = Path(directory) / 'audio.mp3'
     if code or not audio.exists():
+        print(json.dumps({'event': 'import_failed', 'reason': failure}), flush=True)
         # Do not expose downloader logs, signed media URLs, or upstream HTML.
         raise ValueError('Could not import this song. Use a public, unrestricted video under 10 minutes, or upload an audio file.')
     if not 0 < audio.stat().st_size <= MAX_BYTES:
@@ -75,6 +83,10 @@ def download(url, directory, report=lambda *_: None):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header('X-Importer-Version', 'progress-2')
+        super().end_headers()
+
     def log_message(self, *_args):
         pass
 
@@ -103,14 +115,16 @@ class Handler(BaseHTTPRequestHandler):
             length = int(self.headers.get('Content-Length', '0'))
             if not 0 < length <= 4096:
                 return self.error('Invalid request size.', 413)
-            url = json.loads(self.rfile.read(length)).get('url')
+            payload = json.loads(self.rfile.read(length))
+            url = payload.get('url')
             if not isinstance(url, str) or not re.fullmatch(r'https://www\.youtube\.com/watch\?v=[A-Za-z0-9_-]{11}', url):
                 return self.error('Invalid YouTube song link.', 400)
         except (ValueError, AttributeError, TimeoutError):
             return self.error('Invalid request.', 400)
         if not SLOTS.acquire(blocking=False):
             return self.error('The importer is busy. Try again shortly.', 429)
-        streaming = self.headers.get('Accept') == 'application/x-ndjson'
+        streaming = payload.get('stream') is True or 'application/x-ndjson' in self.headers.get('Accept', '')
+        print(json.dumps({'event': 'import_started', 'streaming': streaming}), flush=True)
         def emit(event):
             self.wfile.write((json.dumps(event) + '\n').encode())
             self.wfile.flush()
@@ -160,4 +174,9 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    ThreadingHTTPServer(('0.0.0.0', int(os.environ.get('PORT', '8080'))), Handler).serve_forever()
+    server = ThreadingHTTPServer(('0.0.0.0', int(os.environ.get('PORT', '8080'))), Handler)
+    server.daemon_threads = False
+    # PID 1 must handle SIGTERM so image rollouts can replace the process.
+    signal.signal(signal.SIGTERM, lambda *_: threading.Thread(target=server.shutdown).start())
+    with server:
+        server.serve_forever()

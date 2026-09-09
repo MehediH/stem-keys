@@ -135,7 +135,7 @@ export function useStemPlayer() {
           'Content-Type': 'application/json',
           Accept: 'application/x-ndjson',
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, stream: true }),
         signal: controller.signal,
       });
       if (!response.ok) {

@@ -70,7 +70,10 @@ export async function importYoutube(
               ? 'application/x-ndjson'
               : 'audio/mpeg',
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({
+          url,
+          ...(payload.stream === true ? { stream: true } : {}),
+        }),
         signal: request.signal,
       }),
     );
