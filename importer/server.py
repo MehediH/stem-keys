@@ -73,6 +73,10 @@ def download(url, directory, report=lambda *_: None):
     audio = Path(directory) / 'audio.mp3'
     if code or not audio.exists():
         print(json.dumps({'event': 'import_failed', 'reason': failure}), flush=True)
+        if failure == 'youtube_verification_required':
+            raise ValueError('YouTube is asking this server to sign in. Please upload an audio file instead.')
+        if failure == 'youtube_forbidden':
+            raise ValueError('YouTube blocked this audio download. Please upload an audio file instead.')
         # Do not expose downloader logs, signed media URLs, or upstream HTML.
         raise ValueError('Could not import this song. Use a public, unrestricted video under 10 minutes, or upload an audio file.')
     if not 0 < audio.stat().st_size <= MAX_BYTES:
