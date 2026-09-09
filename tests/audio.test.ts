@@ -148,6 +148,8 @@ test('visuals read separate stem signals and freeze while paused', async () => {
   assert.equal(first.texture[0], 40);
   assert.equal(second.texture[0], 80);
   assert.ok(second.power > first.power);
+  assert.ok(first.power > 0.25, 'quiet stems should visibly drive the shader');
+  assert.ok(first.texture[1] > 140, 'quiet waveforms get more visible displacement');
   assert.notEqual(first.texture, second.texture);
   f.player.pause();
   f.analyserFrames[0].frequency = 0;

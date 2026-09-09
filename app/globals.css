@@ -211,23 +211,6 @@ summary:focus-visible {
 .stem-face:focus-visible .stem-hint {
   opacity: 1;
 }
-.stem-light {
-  position: absolute;
-  top: 28px;
-  right: 28px;
-  height: 7px;
-  width: 7px;
-  border: 1px solid #f7f8f2;
-  border-radius: 50%;
-}
-.audible .stem-light {
-  background: #f7f8f2;
-}
-.selected .stem-light {
-  box-shadow:
-    0 0 0 5px #163cdb,
-    0 0 0 6px #ffffffb0;
-}
 .muted .halftone {
   opacity: 0.2;
 }
@@ -388,12 +371,6 @@ summary:focus-visible {
   .stem-grid {
     grid-template-rows: repeat(2, minmax(210px, calc((100svh - 112px) /2)));
   }
-  .stem-light {
-    right: 16px;
-    top: 22px;
-    width: 5px;
-    height: 5px;
-  }
   .stem-controls {
     left: 16px;
     right: 16px;
@@ -427,4 +404,17 @@ summary:focus-visible {
   .spinner {
     animation-duration: 4s;
   }
+}
+
+.processing-status {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: calc(100% - 32px);
+  font-variant-numeric: tabular-nums;
+}
+.processing-status strong {
+  color: var(--foreground);
+  font-size: 24px;
+  font-weight: 500;
 }

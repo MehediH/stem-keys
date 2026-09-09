@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import SeparationWorker from '../workers/separate.worker.ts?worker';
 import { fingerprintAudio } from '@/lib/visual-identity';
 import { youtubeVideoUrl } from '@/lib/youtube';
+import { readImportStream } from '@/lib/import-stream';
 import {
   toggleChannel,
   toggleGroup,
@@ -130,7 +131,10 @@ export function useStemPlayer() {
     try {
       const response = await fetch('/api/youtube', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/x-ndjson',
+        },
         body: JSON.stringify({ url }),
         signal: controller.signal,
       });
@@ -145,16 +149,23 @@ export function useStemPlayer() {
             : 'YouTube import failed. Try uploading an audio file.',
         );
       }
-      if (!response.headers.get('Content-Type')?.startsWith('audio/'))
-        throw new Error('YouTube did not return audio. Try uploading a file.');
-      const blob = await response.blob();
+      if (
+        !response.headers
+          .get('Content-Type')
+          ?.startsWith('application/x-ndjson')
+      )
+        throw new Error(
+          'YouTube did not return audio. Please reload and try again.',
+        );
+      const file = await readImportStream(response, (stage, progress) => {
+        if (currentJob !== job.current) return;
+        setStage(stage);
+        setProgress(progress);
+      });
       if (currentJob !== job.current) return;
-      const title = decodeURIComponent(
-        response.headers.get('X-Audio-Title') || 'YouTube audio',
-      );
       download.current = null;
       window.clearTimeout(timeout);
-      await loadFile(new File([blob], `${title}.mp3`, { type: 'audio/mpeg' }));
+      await loadFile(file);
     } catch (cause) {
       if (currentJob !== job.current) return;
       setStatus('error');

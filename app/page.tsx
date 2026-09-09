@@ -94,7 +94,6 @@ export default function Home() {
                     <span className="stem-hint" aria-hidden="true">
                       {i + 1} · {stem.label}
                     </span>
-                    <span className="stem-light" aria-hidden="true" />
                   </button>
                   <div className="stem-controls">
                     <Slider
@@ -168,9 +167,14 @@ export default function Home() {
               )}
             </div>
           )}
-          {busy && player.stage === 'Importing from YouTube' && (
+          {busy && (
             <div className="upload-prompt">
-              <output>Importing from YouTube…</output>
+              <output className="processing-status">
+                <span>{player.stage}</span>
+                {player.progress !== null && (
+                  <strong>{Math.floor(player.progress)}%</strong>
+                )}
+              </output>
             </div>
           )}
         </div>

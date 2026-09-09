@@ -33,10 +33,11 @@ void main(){
   float motion=time*(.7+character.y*.8);
   float f=spectrum(q.x), w=wave(q.x);
   float low=spectrum(.22), mid=spectrum(.57);
+  p*=1.-power*.12;
   float field=0.;
   if(variant<.5){
     vec2 v=rotate(-.55)*p;
-    float bend=sin(v.x*complexity+motion*.32+phase)*(.12+identity.z*.25+mid*.20)+w*.14;
+    float bend=sin(v.x*complexity+motion*.32+phase)*(.12+identity.z*.25+mid*.30)+w*.30;
     float tube=(v.y-bend)/(width+power*.12);
     float surface=sqrt(max(0.,1.-tube*tube));
     float mask=1.-smoothstep(.96,1.02,abs(tube));
@@ -47,7 +48,7 @@ void main(){
   }else if(variant<1.5){
     vec2 v=rotate(.3)*p; v.y*=1.+character.z*.25;
     float radius=length(v), angle=atan(v.y,v.x);
-    float rim=.55+cos(angle*complexity+phase)*identity.y*.10+low*.07;
+    float rim=.55+cos(angle*complexity+phase)*identity.y*.10+low*.12+w*.08;
     float ring=(radius-rim)/(width+power*.08);
     float mask=1.-smoothstep(.96,1.02,abs(ring));
     float tube=sqrt(max(0.,1.-ring*ring));
@@ -57,7 +58,7 @@ void main(){
   }else if(variant<2.5){
     vec2 v=p+vec2(.05,-.06);
     v.x+=sin(v.y*complexity+phase)*character.z*.16;
-    float radius=.76+identity.w*.14+low*.06;
+    float radius=.76+identity.w*.14+low*.12;
     float sphere=sqrt(max(0.,radius*radius-dot(v,v)))/radius;
     float mask=1.-smoothstep(radius-.01,radius+.01,length(v));
     float light=max(0.,dot(normalize(vec3(v,sphere)),normalize(vec3(-.6,.5,1.))));
@@ -66,7 +67,7 @@ void main(){
   }else{
     vec2 v=rotate(motion*.07+.5)*p;
     float a=atan(v.y,v.x);
-    float edge=.70+(.09+identity.w*.16)*cos(a*complexity+motion*.1+phase)+f*.07;
+    float edge=.70+(.09+identity.w*.16)*cos(a*complexity+motion*.1+phase)+f*.12+w*.08;
     float depth=sqrt(max(0.,1.-pow(length(v)/edge,2.)));
     float mask=1.-smoothstep(edge-.015,edge+.015,length(v));
     float folded=.5+.5*cos(depth*detail-a*complexity+motion*.25+phase+w*.6);
@@ -182,7 +183,7 @@ export function createHalftone(canvas: HTMLCanvasElement, variant: number) {
       gl.uniform1f(uniforms.power, data?.power ?? 0);
       if (time === 0) phase = 0;
       phase +=
-        Math.max(0, Math.min(0.1, time - lastTime)) * (data?.power ?? 0) * 2;
+        Math.max(0, Math.min(0.1, time - lastTime)) * (data?.power ?? 0) * 3.2;
       lastTime = time;
       gl.uniform1f(uniforms.time, phase);
       gl.texSubImage2D(

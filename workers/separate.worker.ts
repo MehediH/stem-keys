@@ -107,7 +107,7 @@ self.onmessage = async (
       });
     send({
       type: 'progress',
-      stage: `Separating your song · ${backend}`,
+      stage: 'Decoding stems',
       progress: 0,
     });
     const report = ({
@@ -121,7 +121,7 @@ self.onmessage = async (
     }) => {
       send({
         type: 'progress',
-        stage: `Separating · section ${completed} of ${total} · ${backend}`,
+        stage: `Decoding stems · step ${completed} of ${total}`,
         progress: progress * 100,
       });
     };

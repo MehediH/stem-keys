@@ -63,7 +63,13 @@ export async function importYoutube(
     return await env.YOUTUBE_IMPORTER.fetch(
       new Request('https://importer/import', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Accept:
+            request.headers.get('Accept') === 'application/x-ndjson'
+              ? 'application/x-ndjson'
+              : 'audio/mpeg',
+        },
         body: JSON.stringify({ url }),
         signal: request.signal,
       }),

@@ -162,7 +162,10 @@ export class StemPlayer {
     analyser.getFloatTimeDomainData(this.wave);
     let sum = 0;
     for (const value of this.wave) sum += value * value;
-    visual.power = Math.min(1, Math.sqrt(sum / this.wave.length) * 5);
+    const rms = Math.sqrt(sum / this.wave.length);
+    // Lift quiet stems without flattening louder ones or amplifying silence.
+    visual.power = 1 - Math.exp(-Math.max(0, rms - 0.0005) * 16);
+    const waveGain = Math.min(8, 0.4 / Math.max(0.05, rms));
     for (let i = 0; i < 256; i++) {
       // Logarithmic bins preserve the low-end detail that linear FFT plots lose.
       const hz = 25 * Math.pow(16000 / 25, i / 255);
@@ -172,7 +175,7 @@ export class StemPlayer {
       );
       visual.texture[i * 4] = this.frequency[bin];
       visual.texture[i * 4 + 1] = Math.round(
-        (Math.max(-1, Math.min(1, this.wave[i * 8])) + 1) * 127.5,
+        (Math.max(-1, Math.min(1, this.wave[i * 8] * waveGain)) + 1) * 127.5,
       );
     }
     return visual;
