@@ -70,6 +70,51 @@ summary:focus-visible {
   outline: 2px dashed white;
   outline-offset: 8px;
 }
+.visual-stage {
+  position: relative;
+}
+.awaiting-upload .stem-grid {
+  opacity: 0.28;
+}
+.upload-prompt {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  pointer-events: none;
+}
+.upload-song {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  max-width: calc(100% - 32px);
+  padding: 18px 28px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--foreground);
+  color: var(--background);
+  font-size: 18px;
+  font-weight: 500;
+  pointer-events: auto;
+  transition: transform 0.15s;
+}
+.upload-song:hover {
+  transform: scale(1.03);
+}
+.upload-song:focus-visible {
+  outline-offset: 5px;
+}
+.upload-prompt p {
+  margin: 0;
+  padding: 4px 10px;
+  background: var(--background);
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
 .stem-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

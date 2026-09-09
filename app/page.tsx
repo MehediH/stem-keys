@@ -30,6 +30,7 @@ export default function Home() {
   useEffect(() => registerPlayerTools(() => playerRef.current), []);
   const ready = player.status === 'ready',
     busy = player.status === 'processing';
+  const needsUpload = !ready && !busy;
   return (
     <main className="blue-room">
       <h1 className="sr-only">Stem Keys</h1>
@@ -64,47 +65,62 @@ export default function Home() {
           if (!busy && file) void player.loadFile(file);
         }}
       >
-        <div className="stem-grid">
-          {STEMS.map((stem, i) => {
-            const on = audible(player.mix, i);
-            return (
-              <article
-                key={stem.id}
-                className={`stem ${ready && !on ? 'muted' : ''} ${ready && on ? 'audible' : ''} ${player.mix.group?.includes(i) ? 'selected' : ''}`}
-              >
-                <button
-                  className="stem-face"
-                  disabled={!ready}
-                  aria-label={`${on ? 'Mute' : 'Unmute'} ${stem.label}`}
-                  aria-pressed={ready && on}
-                  aria-keyshortcuts={String(i + 1)}
-                  title={`${i + 1} · ${stem.label} · Shift + click to play together`}
-                  onClick={(e) =>
-                    e.shiftKey ? player.selectStem(i) : player.toggleStem(i)
-                  }
+        <div className={`visual-stage ${needsUpload ? 'awaiting-upload' : ''}`}>
+          <div className="stem-grid">
+            {STEMS.map((stem, i) => {
+              const on = audible(player.mix, i);
+              return (
+                <article
+                  key={stem.id}
+                  className={`stem ${ready && !on ? 'muted' : ''} ${ready && on ? 'audible' : ''} ${player.mix.group?.includes(i) ? 'selected' : ''}`}
                 >
-                  <Halftone index={i} engine={player.engine} />
-                  <span className="stem-hint" aria-hidden="true">
-                    {i + 1} · {stem.label}
-                  </span>
-                  <span className="stem-light" aria-hidden="true" />
-                </button>
-                <div className="stem-controls">
-                  <Slider
+                  <button
+                    className="stem-face"
                     disabled={!ready}
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={[player.mix.volumes[i]]}
-                    onValueChange={(v) =>
-                      player.volume(i, Array.isArray(v) ? v[0] : v)
+                    aria-label={`${on ? 'Mute' : 'Unmute'} ${stem.label}`}
+                    aria-pressed={ready && on}
+                    aria-keyshortcuts={String(i + 1)}
+                    title={`${i + 1} · ${stem.label} · Shift + click to play together`}
+                    onClick={(e) =>
+                      e.shiftKey ? player.selectStem(i) : player.toggleStem(i)
                     }
-                    aria-label={`${stem.label} volume`}
-                  />
-                </div>
-              </article>
-            );
-          })}
+                  >
+                    <Halftone index={i} engine={player.engine} />
+                    <span className="stem-hint" aria-hidden="true">
+                      {i + 1} · {stem.label}
+                    </span>
+                    <span className="stem-light" aria-hidden="true" />
+                  </button>
+                  <div className="stem-controls">
+                    <Slider
+                      disabled={!ready}
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={[player.mix.volumes[i]]}
+                      onValueChange={(v) =>
+                        player.volume(i, Array.isArray(v) ? v[0] : v)
+                      }
+                      aria-label={`${stem.label} volume`}
+                    />
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          {needsUpload && (
+            <div className="upload-prompt">
+              <button
+                className="upload-song"
+                data-native-space
+                onClick={() => input.current?.click()}
+              >
+                <Upload size={22} strokeWidth={1.5} aria-hidden="true" />
+                Upload a song
+              </button>
+              <p>{dragging ? 'Drop it here' : 'or drop an audio file here'}</p>
+            </div>
+          )}
         </div>
         <div className="transport">
           <button
