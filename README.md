@@ -18,7 +18,17 @@ The interface uses royal blue and white, with no permanent text or number labels
 ## Run
 
 Node 22.13+ and npm. Run `npm ci`, then `npm run dev`.
-`npm run build` creates the Sites deployment. For browser verification use `npm run build` followed by `npm run start -- --port 3000`; the production preview avoids the development runtime injecting window-only hot-reload code into audio workers. The project identity is in `.openai/hosting.json`.
+`npm run build` creates a Cloudflare Worker and its static assets. For browser verification use `npm run build` followed by `npm run start -- --port 3000`; the production preview avoids the development runtime injecting window-only hot-reload code into audio workers. Cloudflare configuration is in `wrangler.jsonc`. The old `.openai/hosting.json` is retained only as a record of the previous Sites deployment.
+
+## Deploy
+
+The GitHub repository is https://github.com/MehediH/stem-keys (private).
+
+`npm run deploy` builds and publishes to Cloudflare Workers using the account in `wrangler.jsonc`. Run `npx wrangler login` first if needed. No application secrets or server-side audio processing are required.
+
+On a machine with a work-account `CLOUDFLARE_API_TOKEN` set, use `env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_ACCOUNT_ID npm run deploy` to use the saved personal OAuth login. Credentials stay outside the repository. Deployment is manual; pushing to GitHub does not automatically deploy.
+
+The build clears stale output and excludes the browser separation worker from server builds. ONNX's large WASM asset stays in the browser assets; it is not bundled into the Cloudflare Worker.
 
 ## Separation
 

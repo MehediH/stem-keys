@@ -1,5 +1,5 @@
 {
-  "name": "sites-project",
+  "name": "stem-keys",
   "version": "0.1.0",
   "private": true,
   "engines": {
@@ -10,7 +10,10 @@
     "build": "vinext build",
     "start": "wrangler dev --config dist/server/wrangler.json",
     "lint": "oxlint",
-    "format": "oxfmt"
+    "format": "oxfmt",
+    "deploy": "npm run build && wrangler deploy --config dist/server/wrangler.json",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "prebuild": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
@@ -38,7 +41,6 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",
     "@cloudflare/workers-types": "4.20260515.1",
-    "@openai/sites-vite-plugin": "0.2.0",
     "@tailwindcss/postcss": "4.2.1",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
