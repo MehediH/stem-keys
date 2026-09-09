@@ -22,7 +22,7 @@ Node 22.13+ and npm. Run `npm ci`, then `npm run dev`.
 
 ## Deploy
 
-The GitHub repository is https://github.com/MehediH/stem-keys (private).
+The GitHub repository is https://github.com/MehediH/stem-keys (private). The live app is https://stem-keys.mehedih.workers.dev on the personal Cloudflare account.
 
 `npm run deploy` builds and publishes to Cloudflare Workers using the account in `wrangler.jsonc`. Run `npx wrangler login` first if needed. No application secrets or server-side audio processing are required.
 
