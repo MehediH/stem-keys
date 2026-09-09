@@ -10,6 +10,8 @@ import {
   X,
   LoaderCircle,
   AlertCircle,
+  Link,
+  ArrowRight,
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Progress } from '@/components/ui/progress';
@@ -22,6 +24,8 @@ export default function Home() {
   const input = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [scrub, setScrub] = useState<number | null>(null);
+  const [link, setLink] = useState('');
+  const [sourceOpen, setSourceOpen] = useState(false);
   const player = useStemPlayer();
   const playerRef = useRef(player);
   useEffect(() => {
@@ -31,6 +35,7 @@ export default function Home() {
   const ready = player.status === 'ready',
     busy = player.status === 'processing';
   const needsUpload = !ready && !busy;
+  const showSource = !busy && (needsUpload || sourceOpen);
   return (
     <main className="blue-room">
       <h1 className="sr-only">Stem Keys</h1>
@@ -65,7 +70,7 @@ export default function Home() {
           if (!busy && file) void player.loadFile(file);
         }}
       >
-        <div className={`visual-stage ${needsUpload ? 'awaiting-upload' : ''}`}>
+        <div className={`visual-stage ${showSource ? 'awaiting-upload' : ''}`}>
           <div className="stem-grid">
             {STEMS.map((stem, i) => {
               const on = audible(player.mix, i);
@@ -108,17 +113,64 @@ export default function Home() {
               );
             })}
           </div>
-          {needsUpload && (
+          {showSource && (
             <div className="upload-prompt">
               <button
                 className="upload-song"
                 data-native-space
-                onClick={() => input.current?.click()}
+                onClick={() => {
+                  setSourceOpen(false);
+                  input.current?.click();
+                }}
               >
                 <Upload size={22} strokeWidth={1.5} aria-hidden="true" />
                 Upload a song
               </button>
               <p>{dragging ? 'Drop it here' : 'or drop an audio file here'}</p>
+              <form
+                className="youtube-form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  setSourceOpen(false);
+                  void player.loadYoutube(link);
+                }}
+              >
+                <input
+                  type="url"
+                  required
+                  maxLength={2048}
+                  value={link}
+                  onChange={(event) => setLink(event.target.value)}
+                  placeholder="Paste a YouTube Music link"
+                  aria-label="YouTube Music or YouTube song link"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                <button
+                  type="submit"
+                  data-native-space
+                  aria-label="Import YouTube song"
+                  title="Import song"
+                  disabled={!link.trim()}
+                >
+                  <ArrowRight size={20} aria-hidden="true" />
+                </button>
+              </form>
+              {ready && (
+                <button
+                  className="icon-button dismiss-source"
+                  data-native-space
+                  aria-label="Close song import"
+                  onClick={() => setSourceOpen(false)}
+                >
+                  <X size={20} />
+                </button>
+              )}
+            </div>
+          )}
+          {busy && player.stage === 'Importing from YouTube' && (
+            <div className="upload-prompt">
+              <output>Importing from YouTube…</output>
             </div>
           )}
         </div>
@@ -132,6 +184,17 @@ export default function Home() {
             onClick={() => input.current?.click()}
           >
             <Upload size={20} strokeWidth={1.5} />
+          </button>
+          <button
+            className="icon-button"
+            data-native-space
+            disabled={busy}
+            aria-label="Import a YouTube link"
+            title="Import a YouTube link"
+            aria-expanded={showSource}
+            onClick={() => setSourceOpen(!sourceOpen)}
+          >
+            <Link size={19} strokeWidth={1.5} />
           </button>
           <button
             className="icon-button"
@@ -206,7 +269,7 @@ export default function Home() {
         </span>
         {player.error && (
           <div className="error-state">
-            <details>
+            <details open>
               <summary aria-label="Show error" title={player.error}>
                 <AlertCircle size={19} />
               </summary>

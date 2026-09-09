@@ -1,6 +1,6 @@
 # Stem Keys
 
-A browser stem player: open an MP3, separate vocals/drums/bass/other, then mix with the keyboard. All audio decoding, separation, and playback happen on the user's device. No audio is sent to the server or stored there.
+A browser stem player: open an MP3 or paste a YouTube song link, separate vocals/drums/bass/other, then mix with the keyboard. Audio decoding, separation, and playback happen on the user's device. Uploaded files never leave the browser. YouTube imports pass through a backend that temporarily downloads and converts the public audio, sends it to the browser, and deletes its temporary files.
 
 ## Visuals
 
@@ -24,11 +24,23 @@ Node 22.13+ and npm. Run `npm ci`, then `npm run dev`.
 
 The GitHub repository is https://github.com/MehediH/stem-keys (private). The live app is https://stem-keys.mehedih.workers.dev on the personal Cloudflare account.
 
-`npm run deploy` builds and publishes to Cloudflare Workers using the account in `wrangler.jsonc`. Run `npx wrangler login` first if needed. No application secrets or server-side audio processing are required. The native Worker’s `/api/model` route bypasses the application framework and streams the fixed public model from Hugging Face; it never receives uploaded audio.
+`npm run deploy` builds and publishes the app to Cloudflare Workers using the account in `wrangler.jsonc`. Deploy the importer first with `npm run deploy:importer`. Docker must be running; the personal Cloudflare account needs Workers Paid and a login with Containers access (`npx wrangler login`). No application secrets are required. The native Worker’s `/api/model` route bypasses the application framework and streams the fixed public model from Hugging Face; it never receives uploaded audio.
 
 On a machine with a work-account `CLOUDFLARE_API_TOKEN` set, use `env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_ACCOUNT_ID npm run deploy` to use the saved personal OAuth login. Credentials stay outside the repository. Deployment is manual; pushing to GitHub does not automatically deploy.
 
 The build clears stale output and excludes the browser separation worker from server builds. ONNX's large WASM asset stays in the browser assets; it is not bundled into the Cloudflare Worker.
+
+## YouTube import
+
+Paste a single YouTube Music, YouTube, or youtu.be song link and press Enter or the arrow. The link icon opens the importer after a song is loaded. Playlist links are rejected; a song link that includes a playlist imports only that song. File upload remains available.
+
+`/api/youtube` checks the origin, limits request size, validates and canonicalizes the URL, and limits imports to three per minute per IP at each Cloudflare location. It forwards through a private service binding to `stem-keys-importer`. The importer has no public URL, at most one basic container, two concurrent jobs, and sleeps after two idle minutes. These limits reduce usage but are not a hard spending cap.
+
+The container runs pinned yt-dlp with Node for its JavaScript runtime and FFmpeg for MP3 conversion. Only public, unrestricted, non-live videos up to 10 minutes and downloads up to 100 MiB are accepted. It does not use cookies, account credentials, or third-party download APIs. Jobs time out after 90 seconds; browser requests time out after 120 seconds including container startup. Cancelling stops the browser request; backend work may continue until completion or its timeout. Temporary files are deleted after the response or failure.
+
+For local testing, run `npm run start:importer` in one terminal. In another, run `npm run build` and then `npm run start:youtube -- --port 3000`. A local-only service binding forwards to the Docker container on 127.0.0.1:8789. This uses the production importer image without requiring Cloudflare's local container-network interception, which can fail with `setsockoptint: protocol not available` on Docker Desktop. Plain `npm run start` keeps upload available but needs a separately running importer for YouTube links. Never deploy `importer/wrangler.local.jsonc`; the deploy script uses the production config.
+
+YouTube may reject requests, especially from hosting-provider IPs. Local success does not guarantee hosted success. If imports fail, try file upload. To update the extractor, change its pinned version in `importer/Dockerfile`, rebuild, test a public link, and redeploy the importer. Never add personal cookies to the image or repository.
 
 ## Separation
 

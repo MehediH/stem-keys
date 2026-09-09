@@ -1,8 +1,15 @@
 import app from 'vinext/server/fetch-handler';
 import { MODEL_URL, MODEL_BYTES } from './lib/model';
+import { importYoutube, type YoutubeEnv } from './lib/youtube-import';
 
 export default {
-  async fetch(request: Request, env: Record<string, unknown>, ctx: unknown) {
+  async fetch(
+    request: Request,
+    env: Record<string, unknown> & YoutubeEnv,
+    ctx: unknown,
+  ) {
+    if (new URL(request.url).pathname === '/api/youtube')
+      return importYoutube(request, env);
     if (new URL(request.url).pathname !== '/api/model')
       return app.fetch(request, env, ctx);
     if (request.method !== 'GET' && request.method !== 'HEAD')

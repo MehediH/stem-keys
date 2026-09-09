@@ -6,5 +6,15 @@
   "compatibility_date": "2026-05-15",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
-  "observability": { "enabled": true }
+  "services": [
+    { "binding": "YOUTUBE_IMPORTER", "service": "stem-keys-importer" },
+  ],
+  "ratelimits": [
+    {
+      "name": "IMPORT_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 3, "period": 60 },
+    },
+  ],
+  "observability": { "enabled": true },
 }

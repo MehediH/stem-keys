@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 // oxlint-disable-next-line import/default -- Vite's ?worker transform exports this constructor.
 import SeparationWorker from '../workers/separate.worker.ts?worker';
 import { fingerprintAudio } from '@/lib/visual-identity';
+import { youtubeVideoUrl } from '@/lib/youtube';
 import {
   toggleChannel,
   toggleGroup,
@@ -29,7 +30,8 @@ export function useStemPlayer() {
   const worker = useRef<Worker | null>(null);
   const decodingContext = useRef<AudioContext | null>(null);
   const job = useRef(0);
-  const lastFile = useRef<File | null>(null);
+  const lastSource = useRef<File | string | null>(null);
+  const download = useRef<AbortController | null>(null);
   const transportBusy = useRef(false);
 
   function setMix(next: Mix) {
@@ -85,6 +87,8 @@ export function useStemPlayer() {
   }
   function stopWork() {
     job.current++;
+    download.current?.abort();
+    download.current = null;
     worker.current?.terminate();
     worker.current = null;
     if (decodingContext.current)
@@ -97,7 +101,74 @@ export function useStemPlayer() {
     setName('');
     setStage('');
     setError('');
-    lastFile.current = null;
+    lastSource.current = null;
+  }
+
+  async function loadYoutube(value: string) {
+    const url = youtubeVideoUrl(value);
+    if (!url) {
+      setError('Paste a link to one YouTube Music or YouTube song.');
+      return;
+    }
+    stopWork();
+    const currentJob = job.current;
+    const controller = new AbortController();
+    download.current = controller;
+    lastSource.current = url;
+    engine.current?.dispose();
+    engine.current = null;
+    setName('YouTube audio');
+    setStatus('processing');
+    setStage('Importing from YouTube');
+    setProgress(null);
+    setError('');
+    setPlaying(false);
+    setDuration(0);
+    setPosition(0);
+    setMix(initialMix());
+    const timeout = window.setTimeout(() => controller.abort(), 120_000);
+    try {
+      const response = await fetch('/api/youtube', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        const payload: unknown = await response.json().catch(() => null);
+        throw new Error(
+          payload !== null &&
+            typeof payload === 'object' &&
+            'error' in payload &&
+            typeof payload.error === 'string'
+            ? payload.error
+            : 'YouTube import failed. Try uploading an audio file.',
+        );
+      }
+      if (!response.headers.get('Content-Type')?.startsWith('audio/'))
+        throw new Error('YouTube did not return audio. Try uploading a file.');
+      const blob = await response.blob();
+      if (currentJob !== job.current) return;
+      const title = decodeURIComponent(
+        response.headers.get('X-Audio-Title') || 'YouTube audio',
+      );
+      download.current = null;
+      window.clearTimeout(timeout);
+      await loadFile(new File([blob], `${title}.mp3`, { type: 'audio/mpeg' }));
+    } catch (cause) {
+      if (currentJob !== job.current) return;
+      setStatus('error');
+      setError(
+        controller.signal.aborted
+          ? 'YouTube took too long. Try again or upload an audio file.'
+          : cause instanceof Error
+            ? cause.message
+            : 'YouTube import failed. Try uploading a file.',
+      );
+    } finally {
+      window.clearTimeout(timeout);
+      if (download.current === controller) download.current = null;
+    }
   }
 
   async function loadFile(file: File) {
@@ -120,7 +191,7 @@ export function useStemPlayer() {
     const currentJob = job.current;
     engine.current?.dispose();
     engine.current = null;
-    lastFile.current = file;
+    lastSource.current = file;
     setName(file.name);
     setStatus('processing');
     setError('');
@@ -305,9 +376,12 @@ export function useStemPlayer() {
     engine,
     mix,
     loadFile,
+    loadYoutube,
     cancel,
     retry: () => {
-      if (lastFile.current) void loadFile(lastFile.current);
+      if (typeof lastSource.current === 'string')
+        void loadYoutube(lastSource.current);
+      else if (lastSource.current) void loadFile(lastSource.current);
     },
     toggleStem,
     selectStem,

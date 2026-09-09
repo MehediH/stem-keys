@@ -13,10 +13,14 @@
     "format": "oxfmt",
     "deploy": "npm run build && wrangler deploy --config dist/server/wrangler.json",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
-    "prebuild": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
+    "prebuild": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "deploy:importer": "wrangler deploy --config importer/wrangler.jsonc",
+    "start:youtube": "wrangler dev --config dist/server/wrangler.json --config importer/wrangler.local.jsonc",
+    "start:importer": "docker build --platform linux/amd64 -t stem-keys-importer:local importer && docker run --rm --platform linux/amd64 -p 127.0.0.1:8789:8080 stem-keys-importer:local"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
+    "@cloudflare/containers": "0.3.7",
     "@shadcn/react": "0.3.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",

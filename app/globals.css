@@ -108,12 +108,58 @@ summary:focus-visible {
 .upload-song:focus-visible {
   outline-offset: 5px;
 }
-.upload-prompt p {
+.upload-prompt p,
+.upload-prompt output {
   margin: 0;
   padding: 4px 10px;
   background: var(--background);
   font-size: 14px;
   color: var(--muted-foreground);
+}
+.youtube-form {
+  display: flex;
+  width: min(370px, calc(100% - 32px));
+  margin-top: 12px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--background);
+  pointer-events: auto;
+}
+.youtube-form:focus-within {
+  border-color: var(--foreground);
+}
+.youtube-form input {
+  min-width: 0;
+  flex: 1;
+  padding: 9px 12px;
+  border: 0;
+  outline: none;
+  color: var(--foreground);
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+}
+.youtube-form input::placeholder {
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+.youtube-form button {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--foreground);
+  color: var(--background);
+}
+.youtube-form button:disabled {
+  opacity: 0.4;
+}
+.dismiss-source {
+  pointer-events: auto;
 }
 .stem-grid {
   display: grid;
