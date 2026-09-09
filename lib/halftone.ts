@@ -1,5 +1,7 @@
 import type { AudioVisual } from './audio';
 import type { VisualIdentity } from './visual-identity';
+export type LoadingVisual = { progress: number | null; phase: number };
+
 const vertex = `attribute vec2 position; void main(){gl_Position=vec4(position,0.,1.);}`;
 const fragment = `
 precision highp float;
@@ -10,6 +12,8 @@ uniform float time;
 uniform float variant;
 uniform vec4 identity;
 uniform vec3 character;
+uniform vec3 loading;
+uniform float loadingTime;
 float spectrum(float x){return texture2D(audio,vec2(clamp(x,0.,1.),.5)).r;}
 float wave(float x){return texture2D(audio,vec2(clamp(x,0.,1.),.5)).g*2.-1.;}
 mat2 rotate(float a){return mat2(cos(a),-sin(a),sin(a),cos(a));}
@@ -72,6 +76,27 @@ void main(){
     float mask=1.-smoothstep(edge-.015,edge+.015,length(v));
     float folded=.5+.5*cos(depth*detail-a*complexity+motion*.25+phase+w*.6);
     field=mask*(.24+.72*folded)*(.35+.65*depth);
+  }
+  if(loading.x>.5){
+    // Each panel becomes one part of a moving print while the song is prepared.
+    float t=loadingTime;
+    vec2 v=rotate(t*.12+variant*1.57)*p;
+    float r=length(v), a=atan(v.y,v.x);
+    float swirl=a+r*3.-t*.65+variant;
+    float flow=sin(v.x*4.+sin(v.y*3.-t*.6)*1.3+t*.5);
+    float bands;
+    if(loading.z<.5){
+      bands=sin(r*12.-t*1.6+sin(swirl*3.)*1.8);
+    }else if(loading.z<1.5){
+      bands=sin(swirl*4.+sin(r*7.-t)*1.5);
+    }else{
+      bands=sin(v.y*13.+flow*2.8+t*.7+variant*1.4);
+    }
+    float sculpture=smoothstep(-.5,.85,bands);
+    float envelope=1.-smoothstep(.7,1.65,r);
+    float light=.45+.55*(.5+.5*cos(a-t*.3+variant));
+    float reveal=loading.y<0.? .6 : 1.-smoothstep(loading.y*2.7-.8,loading.y*2.7-.45,q.y);
+    field=(.055+sculpture*.82)*envelope*light*(.42+.58*reveal);
   }
   field=clamp(field+field*power*.17,0.,1.);
   float radius=spacing*.60*sqrt(field);
@@ -159,6 +184,8 @@ export function createHalftone(canvas: HTMLCanvasElement, variant: number) {
       'variant',
       'identity',
       'character',
+      'loading',
+      'loadingTime',
     ].map((name) => [name, gl.getUniformLocation(program!, name)]),
   );
   gl.uniform1i(uniforms.audio, 0);
@@ -166,8 +193,14 @@ export function createHalftone(canvas: HTMLCanvasElement, variant: number) {
   let phase = 0,
     lastTime = 0;
   return {
-    draw(data: AudioVisual | null, time: number, identity?: VisualIdentity) {
-      const ratio = Math.min(devicePixelRatio || 1, 1.5);
+    draw(
+      data: AudioVisual | null,
+      time: number,
+      identity?: VisualIdentity,
+      loading?: LoadingVisual,
+      loadingTime = 0,
+    ) {
+      const ratio = Math.min(devicePixelRatio || 1, loading ? 1 : 1.5);
       const width = Math.round(canvas.clientWidth * ratio),
         height = Math.round(canvas.clientHeight * ratio);
       if (!width || !height || gl.isContextLost()) return;
@@ -181,6 +214,13 @@ export function createHalftone(canvas: HTMLCanvasElement, variant: number) {
       gl.uniform4fv(uniforms.identity, identity?.seed ?? [0.5, 0.3, 0.35, 0.5]);
       gl.uniform3fv(uniforms.character, identity?.character ?? [0, 0, 0]);
       gl.uniform1f(uniforms.power, data?.power ?? 0);
+      gl.uniform3f(
+        uniforms.loading,
+        loading ? 1 : 0,
+        loading?.progress == null ? -1 : loading.progress / 100,
+        loading?.phase ?? 0,
+      );
+      gl.uniform1f(uniforms.loadingTime, loadingTime);
       if (time === 0) phase = 0;
       phase +=
         Math.max(0, Math.min(0.1, time - lastTime)) * (data?.power ?? 0) * 3.2;

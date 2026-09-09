@@ -36,6 +36,16 @@ export default function Home() {
     busy = player.status === 'processing';
   const needsUpload = !ready && !busy;
   const showSource = !busy && (needsUpload || sourceOpen);
+  const loading = busy
+    ? {
+        progress: player.progress,
+        phase: /Decoding stems|Separating|CPU separation/.test(player.stage)
+          ? 2
+          : /model|Preparing separation/.test(player.stage)
+            ? 1
+            : 0,
+      }
+    : undefined;
   return (
     <main className="blue-room">
       <h1 className="sr-only">Stem Keys</h1>
@@ -70,7 +80,9 @@ export default function Home() {
           if (!busy && file) void player.loadFile(file);
         }}
       >
-        <div className={`visual-stage ${showSource ? 'awaiting-upload' : ''}`}>
+        <div
+          className={`visual-stage ${showSource ? 'awaiting-upload' : ''} ${busy ? 'is-processing' : ''}`}
+        >
           <div className="stem-grid">
             {STEMS.map((stem, i) => {
               const on = audible(player.mix, i);
@@ -90,7 +102,11 @@ export default function Home() {
                       e.shiftKey ? player.selectStem(i) : player.toggleStem(i)
                     }
                   >
-                    <Halftone index={i} engine={player.engine} />
+                    <Halftone
+                      index={i}
+                      engine={player.engine}
+                      loading={loading}
+                    />
                     <span className="stem-hint" aria-hidden="true">
                       {i + 1} · {stem.label}
                     </span>
@@ -169,7 +185,7 @@ export default function Home() {
           )}
           {busy && (
             <div className="upload-prompt">
-              <output className="processing-status">
+              <output className="processing-status" aria-live="polite">
                 <span>{player.stage}</span>
                 {player.progress !== null && (
                   <strong>{Math.floor(player.progress)}%</strong>
