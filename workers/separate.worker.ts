@@ -2,9 +2,7 @@
 import * as ort from 'onnxruntime-web/webgpu';
 import { separateAudio } from '../lib/separate.js';
 import type { StemAudio } from '../lib/audio';
-const MODEL_URL =
-  'https://huggingface.co/timcsy/demucs-web-onnx/resolve/92e33df61cfc9eb820272aaa62d2ef6dcf4d950d/htdemucs_embedded.onnx';
-const MODEL_BYTES = 180534758;
+import { MODEL_URL, MODEL_BYTES } from '../lib/model';
 const send = (message: object) => self.postMessage(message);
 
 async function modelBytes() {
@@ -25,7 +23,9 @@ async function modelBytes() {
     progress: 0,
   });
   // Cache the model bytes ourselves, not Hugging Face's expiring redirect.
-  const response = await fetch(MODEL_URL, { cache: 'no-store' });
+  const response = await fetch(new URL('/api/model', self.location.origin), {
+    cache: 'no-store',
+  });
   if (!response.ok || !response.body)
     throw new Error(
       'Could not download the model. Check your connection and try again.',

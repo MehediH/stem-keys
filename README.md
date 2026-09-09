@@ -24,7 +24,7 @@ Node 22.13+ and npm. Run `npm ci`, then `npm run dev`.
 
 The GitHub repository is https://github.com/MehediH/stem-keys (private). The live app is https://stem-keys.mehedih.workers.dev on the personal Cloudflare account.
 
-`npm run deploy` builds and publishes to Cloudflare Workers using the account in `wrangler.jsonc`. Run `npx wrangler login` first if needed. No application secrets or server-side audio processing are required.
+`npm run deploy` builds and publishes to Cloudflare Workers using the account in `wrangler.jsonc`. Run `npx wrangler login` first if needed. No application secrets or server-side audio processing are required. The `/api/model` route streams the fixed public model from Hugging Face; it never receives uploaded audio.
 
 On a machine with a work-account `CLOUDFLARE_API_TOKEN` set, use `env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_ACCOUNT_ID npm run deploy` to use the saved personal OAuth login. Credentials stay outside the repository. Deployment is manual; pushing to GitHub does not automatically deploy.
 
@@ -32,7 +32,7 @@ The build clears stale output and excludes the browser separation worker from se
 
 ## Separation
 
-A module worker uses HTDemucs with ONNX Runtime Web 1.23.0. The 172 MiB model is downloaded from a pinned Hugging Face revision and cached using the browser Cache API. The runtime loads its WASM support from the versioned jsDelivr CDN. Network access to both hosts is needed on first use; browser storage restrictions can cause a later re-download.
+A module worker uses HTDemucs with ONNX Runtime Web 1.23.0. The 172 MiB model is downloaded from a pinned Hugging Face revision through the app’s streaming route and cached using the browser Cache API. The runtime loads its WASM support from the versioned jsDelivr CDN. The deployment needs access to Hugging Face, and the browser needs access to jsDelivr on first use; browser storage restrictions can cause a later re-download.
 
 The worker tries WebGPU first and falls back to single-threaded WASM if GPU initialization or inference fails. Single-threaded WASM requires no cross-origin isolation. CPU processing may take longer than the song. Desktop Chrome or Edge is recommended; memory and browser support vary. Inputs are limited to 100 MiB and 10 minutes. Shorter songs use less memory.
 
