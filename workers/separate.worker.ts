@@ -24,7 +24,8 @@ async function modelBytes() {
     stage: 'Downloading model · 172 MB, first use only',
     progress: 0,
   });
-  const response = await fetch(MODEL_URL);
+  // Cache the model bytes ourselves, not Hugging Face's expiring redirect.
+  const response = await fetch(MODEL_URL, { cache: 'no-store' });
   if (!response.ok || !response.body)
     throw new Error(
       'Could not download the model. Check your connection and try again.',
@@ -69,12 +70,14 @@ self.onmessage = async (
 ) => {
   let session: ort.InferenceSession | undefined;
   let gpuFailure = '';
+  let phase = 'model download';
   try {
     // A single WASM thread works without cross-origin isolation, including private Sites.
     ort.env.wasm.numThreads = 1;
     ort.env.wasm.wasmPaths =
       'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/';
     const bytes = await modelBytes();
+    phase = 'audio engine setup';
     send({
       type: 'progress',
       stage: 'Preparing separation · this can take a moment',
@@ -122,6 +125,7 @@ self.onmessage = async (
         progress: progress * 100,
       });
     };
+    phase = 'stem separation';
     let result: StemAudio;
     try {
       result = (await separateAudio(
@@ -162,6 +166,7 @@ self.onmessage = async (
     send({
       type: 'error',
       detail: [
+        phase,
         gpuFailure,
         error instanceof Error ? error.message : String(error),
       ]
