@@ -24,7 +24,7 @@ Node 22.13+ and npm. Run `npm ci`, then `npm run dev`.
 
 The GitHub repository is https://github.com/MehediH/stem-keys (private). The live app is https://stem-keys.mehedih.workers.dev on the personal Cloudflare account.
 
-`npm run deploy` builds and publishes to Cloudflare Workers using the account in `wrangler.jsonc`. Run `npx wrangler login` first if needed. No application secrets or server-side audio processing are required. The `/api/model` route streams the fixed public model from Hugging Face; it never receives uploaded audio.
+`npm run deploy` builds and publishes to Cloudflare Workers using the account in `wrangler.jsonc`. Run `npx wrangler login` first if needed. No application secrets or server-side audio processing are required. The native Worker’s `/api/model` route bypasses the application framework and streams the fixed public model from Hugging Face; it never receives uploaded audio.
 
 On a machine with a work-account `CLOUDFLARE_API_TOKEN` set, use `env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_ACCOUNT_ID npm run deploy` to use the saved personal OAuth login. Credentials stay outside the repository. Deployment is manual; pushing to GitHub does not automatically deploy.
 
