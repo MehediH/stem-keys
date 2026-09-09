@@ -170,6 +170,7 @@ export function useStemPlayer() {
           stage?: string;
           progress?: number | null;
           message?: string;
+          detail?: string;
           stems?: StemAudio;
         }>,
       ) => {
@@ -179,8 +180,13 @@ export function useStemPlayer() {
           setStage(result.stage || 'Separating');
           setProgress(result.progress ?? null);
         }
-        if (result.type === 'error')
+        if (result.type === 'error') {
+          console.error(
+            'Stem separation failed',
+            result.detail || result.message,
+          );
           fail(result.message || 'Separation failed. Please retry.');
+        }
         if (result.type === 'complete' && result.stems) {
           try {
             const player = new StemPlayer(

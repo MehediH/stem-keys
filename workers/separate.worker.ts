@@ -68,6 +68,7 @@ self.onmessage = async (
   event: MessageEvent<{ left: Float32Array; right: Float32Array }>,
 ) => {
   let session: ort.InferenceSession | undefined;
+  let gpuFailure = '';
   try {
     // A single WASM thread works without cross-origin isolation, including private Sites.
     ort.env.wasm.numThreads = 1;
@@ -93,8 +94,8 @@ self.onmessage = async (
         });
         backend = 'GPU';
       }
-    } catch {
-      /* Use CPU when this GPU cannot compile the model. */
+    } catch (error) {
+      gpuFailure = error instanceof Error ? error.message : String(error);
     }
     if (!session)
       session = await ort.InferenceSession.create(bytes, {
@@ -160,6 +161,12 @@ self.onmessage = async (
     console.error('Stem separation failed', error);
     send({
       type: 'error',
+      detail: [
+        gpuFailure,
+        error instanceof Error ? error.message : String(error),
+      ]
+        .filter(Boolean)
+        .join(' | '),
       message:
         error instanceof Error &&
         /download|connection|invalid|incomplete/.test(error.message)
