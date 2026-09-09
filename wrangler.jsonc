@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "stem-keys",
-  "account_id": "dcc351bf73bdc32b74df7483129f41eb",
+  "account_id": "ed9fc60a070609574054b8f12be7460a",
   "main": "worker.ts",
   "compatibility_date": "2026-05-15",
   "compatibility_flags": ["nodejs_compat"],

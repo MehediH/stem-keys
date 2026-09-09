@@ -22,9 +22,9 @@ Node 22.13+ and npm. Run `npm ci`, then `npm run dev`.
 
 ## Deploy
 
-The GitHub repository is https://github.com/MehediH/stem-keys (private). The live app is https://stem-keys.mehedih.workers.dev on the personal Cloudflare account.
+The GitHub repository is https://github.com/MehediH/stem-keys (private). The live app is https://stem-keys.sienvision.workers.dev on the Color Outside the Lines account.
 
-`npm run deploy` builds and publishes the app to Cloudflare Workers using the account in `wrangler.jsonc`. Deploy the importer first with `npm run deploy:importer`. Docker must be running; the personal Cloudflare account needs Workers Paid and a login with Containers access (`npx wrangler login`). No application secrets are required. The native Worker’s `/api/model` route bypasses the application framework and streams the fixed public model from Hugging Face; it never receives uploaded audio.
+`npm run deploy` builds and publishes the app to Cloudflare Workers using the account in `wrangler.jsonc`. Deploy the importer first with `npm run deploy:importer`. Docker must be running; the Cloudflare account needs Workers Paid and a login with Containers access (`npx wrangler login`). No application secrets are required. The native Worker’s `/api/model` route bypasses the application framework and streams the fixed public model from Hugging Face; it never receives uploaded audio.
 
 On a machine with a work-account `CLOUDFLARE_API_TOKEN` set, use `env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_ACCOUNT_ID npm run deploy` to use the saved personal OAuth login. Credentials stay outside the repository. Deployment is manual; pushing to GitHub does not automatically deploy.
 
